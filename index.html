@@ -686,7 +686,7 @@ function spawnCard() {
   else if (r < 0.75) { value = randInt(5, 9); } // 중간 보상
   else { value = randInt(11, 15); }              // 큰 보상
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
-  var hp = Math.max(6, Math.round(value * 1.4));
+  var hp = Math.max(12, Math.round(value * 2.6));
   cards.push({
     x: soldier.x + rand(-8, 8),   // 세로 한 줄(길)을 따라, 부대 정면
     y: horizonY(),
@@ -1441,8 +1441,8 @@ function renderCards() {
   for (var i = 0; i < cards.length; i++) {
     var c = cards[i];
     var s = (c.y > 10 ? scaleAt(c.y) : scaleAt(20)) * 0.9;
-    var w = 60 * s;
-    var h = 58 * s;
+    var w = 76 * s;
+    var h = 72 * s;
     var x = c.x;
     var y = c.y;
 
@@ -1474,7 +1474,7 @@ function renderCards() {
 
     // 텍스트
     ctx.fillStyle = '#FFF';
-    ctx.font = 'bold ' + (26 * s) + 'px sans-serif';
+    ctx.font = 'bold ' + (30 * s) + 'px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = 'rgba(0,0,0,0.4)';
@@ -1488,7 +1488,7 @@ function renderCards() {
     if (c.maxHp > 1) {
       var n = c.hp;
       var m = c.maxHp;
-      var bw = 34 * Math.max(1, s);          // 진행 막대 폭
+      var bw = 40 * Math.max(1, s);          // 진행 막대 폭
       var bx = x - bw / 2;
       var by = y + h * 0.66;
       // 진행 막대 배경
@@ -1500,7 +1500,7 @@ function renderCards() {
       roundRect(bx, by, Math.max(6 * s, bw * (n / m)), 6 * s, 3 * s);
       ctx.fill();
       // 남은 필요 타격수 숫자
-      ctx.font = 'bold ' + Math.round(11 * Math.max(1, s)) + 'px sans-serif';
+      ctx.font = 'bold ' + Math.round(13 * Math.max(1, s)) + 'px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = '#FFF';
       ctx.shadowColor = 'rgba(0,0,0,0.85)';
