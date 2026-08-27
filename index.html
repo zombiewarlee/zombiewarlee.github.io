@@ -9,11 +9,11 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>아빠의 좀비전쟁 - 무료 좀비 슈팅 게임</title>
-<meta name="description" content="아빠의 좀비전쟁 - 밀려오는 좀비 무리를 물리치세요! 숫자 카드(+과 ×)를 맞혀 군인을 늘리고, 좀비 보스를 사로잡는 무료 좀비 슈팅 게임. 큰 글씨와 넉넉한 터치로 아빠를 위한 게임.">
+<meta name="description" content="아빠의 좀비전쟁 - 밀려오는 좀비 무리를 물리치세요! 숫자 카드(+)를 맞혀 군인을 늘리고, 좀비 보스를 쓰러뜨리는 무료 좀비 슈팅 게임. 큰 글씨와 넉넉한 터치로 아빠를 위한 게임.">
 <link rel="canonical" href="https://zombiewarlee.github.io/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="아빠의 좀비전쟁 - 무료 좀비 슈팅 게임">
-<meta property="og:description" content="밀려오는 좀비 무리를 숫자 카드로 물리치세요! +와 × 카드를 맞혀 군인을 늘리고 좀비 보스를 쓰러뜨리는 슈팅 게임.">
+<meta property="og:description" content="밀려오는 좀비 무리를 물리치세요! 숫자 카드(+)를 맞혀 군인을 늘리고 좀비 보스를 쓰러뜨리는 슈팅 게임.">
 <meta property="og:url" content="https://zombiewarlee.github.io/">
 <meta property="og:site_name" content="아빠의 좀비전쟁">
 <meta property="og:locale" content="ko_KR">
@@ -653,6 +653,8 @@ function pickZombieType() {
   return 'normal';
 }
 
+var zombieId = 0;   // 개체별 고정 랜덤 시드용 (비대칭 좀비)
+
 function spawnZombie() {
   // 뭉쳐서(군집) 오는 연출: 한 번에 여러 마리가 다리 위에서 함께 걸어 나옴
   var clusterN = randInt(2, 4) + (wave >= 3 ? 2 : 0);
@@ -677,6 +679,7 @@ function spawnZombie() {
       scale: scaleAt(cy),
       wobble: rand(0, Math.PI * 2),
       wobbleSpeed: rand(3, 6),
+      id: zombieId++,
       dead: false
     });
   }
@@ -704,12 +707,13 @@ function spawnCard() {
 }
 
 function spawnBoss() {
-  var hp = 150 + Math.floor(wave * 40);
-  var w = 64;
+  // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장
+  var w = 64 + Math.min(40, wave * 3);
+  var hp = 150 + Math.floor(wave * 40) + Math.floor(wave * wave * 6);
   bosses.push({
     x: soldier.x,                // 길 한가운데로 걸어 나옴
     y: horizonY(),
-    baseSpeed: 38,
+    baseSpeed: 38 + Math.min(26, wave * 2),
     w: w,
     hp: hp,
     maxHp: hp,
@@ -1308,8 +1312,18 @@ function drawZombieBody(z, cfg) {
   var x = z.x;
   var y = z.y;
   var ph = z.wobble;                      // 걷기 위상
-  var step = Math.sin(ph);                // -1..1
   var bob = Math.max(0, Math.cos(ph)) * 1.5 * s;  // 걷는 리듬 상하 깡충
+
+  // ── 개체별 고정 난수 시드 (프레임마다 같은 비대칭, 좀비마다 서로 다름) ──
+  var seed = (z.id !== undefined ? z.id : (Math.round(x * 7 + y * 13))) % 1000;
+  var r1 = Math.sin(seed * 12.9898) * 43758.5453;
+  r1 = r1 - Math.floor(r1);               // 0~1
+  var r2 = Math.sin((seed + 101) * 78.233) * 12543.22;
+  r2 = r2 - Math.floor(r2);               // 0~1 (두 번째 고정 난수)
+
+  // ── 걷기: 절뚝임 (왼다리 정상 리듬, 오른다리 짧고 불규칙) ──
+  var stepL = Math.sin(ph);
+  var stepR = Math.sin(ph * (0.75 + r1 * 0.3) + 0.5) * (0.7 + r1 * 0.5);
 
   // 그림자
   ctx.fillStyle = 'rgba(0,0,0,0.22)';
@@ -1317,47 +1331,75 @@ function drawZombieBody(z, cfg) {
   ctx.ellipse(x, y + 24 * s, 14 * s, 4 * s, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // 다리 (걷기: 좌우 다리가 번갈아 앞뒤로 흔들림)
+  // ── 다리: 길이 짝짝이 + 절뚝 걷기 ──
+  var legLenDiff = r1 * 4 * s;            // 최대 4px 차이 (한쪽 다리가 짧음)
   ctx.fillStyle = cfg.dark;
-  // 왼쪽 다리
-  ctx.fillRect(x - 8 * s - step * 3 * s, y - 2 * s, 7 * s, 24 * s);
-  // 오른쪽 다리 (반대 위상)
-  ctx.fillRect(x + 1 * s + step * 3 * s, y - 2 * s, 7 * s, 24 * s);
-  // 군화
+  ctx.fillRect(x - 8 * s - stepL * 3 * s, y - 2 * s, 7 * s, (24 - legLenDiff) * s);
+  ctx.fillRect(x + 1 * s + stepR * 3 * s, y - 2 * s, 7 * s, (24 + legLenDiff) * s);
+  // 군화 (신발도 짝짝이)
   ctx.fillStyle = '#222B22';
-  ctx.fillRect(x - 9 * s - step * 3 * s, y + 20 * s, 8 * s, 4 * s);
-  ctx.fillRect(x + 1 * s + step * 3 * s, y + 20 * s, 8 * s, 4 * s);
+  ctx.fillRect(x - 9 * s - stepL * 4 * s, y + 20 * s, 8 * s, 4 * s);
+  ctx.fillRect(x + 1 * s + stepR * 4 * s, y + 20 * s, 7 * s, 3 * s);
+  ctx.fillRect(x + 0 * s + stepR * 4 * s, y + 20 * s, 1 * s, 4 * s);
 
-  // 몸통 (걸을 때 살짝 상하로 깡충)
+  // ── 몸통: 기운 사각형 (개체마다 기울기 다름) ──
+  var lean = (r1 - 0.5) * 0.15;
   var g = ctx.createLinearGradient(x, y - 28 * s - bob, x, y - bob);
   g.addColorStop(0, cfg.color);
   g.addColorStop(1, cfg.dark);
+  ctx.save();
+  ctx.translate(x, y - 14 * s - bob);
+  ctx.rotate(lean);
   ctx.fillStyle = g;
-  ctx.fillRect(x - 13 * s, y - 28 * s - bob, 26 * s, 28 * s);
-  // 찢어진 셔츠/옷갈피
+  ctx.fillRect(-13 * s, -14 * s, 26 * s, 28 * s);
+  // 찢어진 셔츠 (기울어진 좌표계 안)
   ctx.fillStyle = cfg.dark;
-  ctx.fillRect(x - 13 * s, y - 20 * s - bob, 26 * s, 2 * s);
+  ctx.fillRect(-13 * s, -6 * s, 22 * s, 2 * s);
+  ctx.restore();
 
-  // 앞으로 뻗은 팔 (좀비 특유, 걷기 리듬에 맞춰 앞뒤로)
-  var armSwing = step * 3 * s;
+  // ── 팔: 몸통 위쪽에서 팔꿈치가 이상하게 꺾임 (좌우 각도/스윙 다름) ──
+  var swingL = stepL * 2 * s;
+  var swingR = stepR * 2 * s;
+  // 왼팔
+  ctx.save();
+  ctx.translate(x - 11 * s + swingL, y - 25 * s + bob * 0.5);
+  ctx.rotate(-0.2 - 0.15 * r2);
   ctx.fillStyle = cfg.color;
-  ctx.fillRect(x - 4 * s - 14 * s + armSwing, y - 26 * s + bob * 0.5, 6 * s, 22 * s);
-  ctx.fillRect(x - 2 * s + 8 * s - armSwing, y - 26 * s + bob * 0.5, 6 * s, 22 * s);
-  // 손 (앞으로)
+  ctx.fillRect(0, -11 * s, 6 * s, 12 * s);           // 상완
+  ctx.translate(0, -11 * s);
+  ctx.rotate(0.35 + r2 * 0.6);                       // 팔꿈치 꺾임
+  ctx.fillRect(0, -11 * s, 6 * s, 12 * s);           // 하완
   ctx.fillStyle = cfg.dark;
-  ctx.fillRect(x - 4 * s - 15 * s + armSwing, y - 28 * s + bob * 0.5, 7 * s, 6 * s);
-  ctx.fillRect(x - 2 * s + 8 * s - armSwing, y - 28 * s + bob * 0.5, 7 * s, 6 * s);
-
-  // 머리 (좀비 초록, 비뚤 + 깡충)
+  ctx.fillRect(-4 * s, -15 * s, 8 * s, 6 * s);       // 손
+  ctx.restore();
+  // 오른팔 (꺾임 방향 반대)
+  ctx.save();
+  ctx.translate(x + 6 * s - swingR, y - 25 * s + bob * 0.5);
+  ctx.rotate(0.2 + 0.15 * r2);
   ctx.fillStyle = cfg.color;
+  ctx.fillRect(0, -11 * s, 6 * s, 12 * s);
+  ctx.translate(0, -11 * s);
+  ctx.rotate(-0.35 - (1 - r2) * 0.6);
+  ctx.fillRect(0, -11 * s, 6 * s, 12 * s);
+  ctx.fillStyle = cfg.dark;
+  ctx.fillRect(-4 * s, -15 * s, 8 * s, 6 * s);
+  ctx.restore();
+
+  // ── 머리: 비뚤어진 타원 + 고개 기울임 (개체마다 다름) ──
+  ctx.fillStyle = cfg.color;
+  ctx.save();
+  ctx.translate(x, y - 37 * s - bob);
+  ctx.rotate((r1 - 0.5) * 0.5);
   ctx.beginPath();
-  ctx.arc(x, y - 37 * s - bob, 10 * s, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, 9.5 * s, 10.5 * s, 0, 0, Math.PI * 2);
   ctx.fill();
-  // 눈 (빨갛게, 반짝)
+  ctx.restore();
+
+  // ── 눈: 위치도 크기도 어긋남 (복불복) ──
   ctx.fillStyle = '#FF4D4D';
   ctx.beginPath();
-  ctx.arc(x - 4 * s, y - 39 * s - bob, 2 * s, 0, Math.PI * 2);
-  ctx.arc(x + 4 * s, y - 39 * s - bob, 2 * s, 0, Math.PI * 2);
+  ctx.arc(x - 4 * s + r1 * 1.5 * s, y - 39 * s - bob, 2 * s, 0, Math.PI * 2);
+  ctx.arc(x + 4 * s - r1 * 1.5 * s, y - 39 * s - bob + r1 * s, 1.6 * s, 0, Math.PI * 2);
   ctx.fill();
 }
 
