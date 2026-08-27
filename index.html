@@ -401,8 +401,8 @@ var MAX_PARTICLES = 500;
 
 var ZOMBIE_TYPES = {
   normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
-  fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#d9822b', dark: '#a3551a', dmg: 1 },
-  tank:   { hp: 52, speed: 26,  w: 40, score: 30, color: '#7d4fb0', dark: '#562f82', dmg: 2 }
+  fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
+  tank:   { hp: 52, speed: 26,  w: 40, score: 30, color: '#4d9e4d', dark: '#2f6b2f', dmg: 2 }
 };
 
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
@@ -450,7 +450,7 @@ var W = 0;
 var H = 0;
 var dpr = 1;
 
-var soldier = { x: 260, w: 48, lives: 3, fireTimer: 0, muteFlash: 0, aimAngle: -Math.PI/2, recoil: 0, firing: 0, bob: 0 };
+var soldier = { x: 260, w: 48, lives: 1, fireTimer: 0, muteFlash: 0, aimAngle: -Math.PI/2, recoil: 0, firing: 0, bob: 0 };
 var zombies = [];
 var bosses = [];
 var bullets = [];
@@ -683,13 +683,14 @@ function spawnCard() {
   var r = Math.random();
   var kind = 'add';
   var value;
-  if (r < 0.4) { value = randInt(2, 4); }        // 작은 보상
-  else if (r < 0.75) { value = randInt(5, 9); } // 중간 보상
-  else { value = randInt(11, 15); }              // 큰 보상
+  if (r < 0.70) { value = randInt(2, 4); }       // 작은 보상 (70%) — 병사 +10 초과 불가
+  else if (r < 0.92) { value = randInt(5, 7); }  // 중간 보상 (22%) — 5 이상은 저확률
+  else { value = randInt(8, 10); }               // 큰 보상   (8%)  — 최대 +10까지
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
   var hp = Math.max(12, Math.round(value * 2.6));
   cards.push({
-    x: soldier.x + rand(-8, 8),   // 세로 한 줄(길)을 따라, 부대 정면
+    x: soldier.x + rand(-44, 44),  // 넓게 흩뿌림 (초반 병사 1명 보상용)
+    y: horizonY(),
     y: horizonY(),
     baseSpeed: 62,
     kind: kind,
@@ -702,7 +703,7 @@ function spawnCard() {
 }
 
 function spawnBoss() {
-  var hp = 40 + Math.floor(wave * 14);
+  var hp = 150 + Math.floor(wave * 40);
   var w = 64;
   bosses.push({
     x: soldier.x,                // 길 한가운데로 걸어 나옴
@@ -1635,7 +1636,7 @@ function startGame() {
   resizeCanvas();
 
   soldier.x = W / 2;
-  soldier.lives = 3;
+  soldier.lives = 1;   // 처음엔 병사 1명 — 대신 초반 아이템 카드를 미리 뿌려줌
   soldier.fireTimer = 0;
   soldier.muteFlash = 0;
   soldier.recoil = 0;
@@ -1655,6 +1656,14 @@ function startGame() {
   cardTimer = 3;
   bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
   gameTime = 0;
+
+  // 병사 1명으로 시작하는 대가: 시작하자마자 아이템 카드를 넓게 여러 장 뿌려줌
+  // (첫 카드도 곧바로 나오도록 타이머를 앞당김)
+  cardTimer = 1.2;
+  spawnCard();
+  spawnCard();
+  spawnCard();
+  spawnCard();
 
   updateHUD();
   phase = 'playing';
