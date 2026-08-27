@@ -400,9 +400,9 @@ var BULLETS_PER_MEMBER = 7;            // 병사 1명당 허용 총알 수
 var MAX_PARTICLES = 500;
 
 var ZOMBIE_TYPES = {
-  normal: { hp: 14, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
-  fast:   { hp: 10, speed: 100, w: 22, score: 15, color: '#d9822b', dark: '#a3551a', dmg: 1 },
-  tank:   { hp: 34, speed: 26,  w: 40, score: 30, color: '#7d4fb0', dark: '#562f82', dmg: 2 }
+  normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
+  fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#d9822b', dark: '#a3551a', dmg: 1 },
+  tank:   { hp: 52, speed: 26,  w: 40, score: 30, color: '#7d4fb0', dark: '#562f82', dmg: 2 }
 };
 
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
@@ -637,7 +637,7 @@ function fireSquad() {
 }
 
 function getHpForWave() {
-  return 4 + Math.floor(wave * 2);
+  return 10 + Math.floor(wave * 4);
 }
 
 function pickZombieType() {
