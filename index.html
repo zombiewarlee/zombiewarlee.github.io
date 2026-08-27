@@ -683,9 +683,8 @@ function spawnCard() {
   var r = Math.random();
   var kind = 'add';
   var value;
-  if (r < 0.70) { value = randInt(2, 4); }       // 작은 보상 (70%) — 병사 +10 초과 불가
-  else if (r < 0.92) { value = randInt(5, 7); }  // 중간 보상 (22%) — 5 이상은 저확률
-  else { value = randInt(8, 10); }               // 큰 보상   (8%)  — 최대 +10까지
+  if (r < 0.70) { value = randInt(1, 3); }       // 작은 보상 (70%) — 병사 1~5로 제한
+  else { value = randInt(4, 5); }                // 큰 보상   (30%) — 4~5는 덜 흔함, 단일 카드 병사 최대 +5
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
   var hp = Math.max(12, Math.round(value * 2.6));
   cards.push({
