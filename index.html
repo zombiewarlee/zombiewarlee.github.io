@@ -408,7 +408,7 @@ var ZOMBIE_TYPES = {
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
 var BOSS_MIN_DELAY = 20;               // 보스 최소 출몰 간격(초)
 var BOSS_MAX_DELAY = 32;
-var CARD_BASE_INTERVAL = 6;            // 카드 기본 등장 간격(초)
+var CARD_BASE_INTERVAL = 8;            // 카드 기본 등장 간격(초) — 빈도 낮춤
 
 /* ═══════════════════════════════════════
    DOM REFERENCES
@@ -971,7 +971,7 @@ function updateWave(dt) {
   cardTimer -= dt;
   if (cardTimer <= 0) {
     spawnCard();
-    var min = Math.max(3.5, CARD_BASE_INTERVAL - wave * 0.15);
+    var min = Math.max(4.5, CARD_BASE_INTERVAL - wave * 0.15);
     cardTimer = rand(min, min + 3);
   }
 
