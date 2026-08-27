@@ -400,9 +400,9 @@ var BULLETS_PER_MEMBER = 7;            // 병사 1명당 허용 총알 수
 var MAX_PARTICLES = 500;
 
 var ZOMBIE_TYPES = {
-  normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
-  fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
-  tank:   { hp: 52, speed: 26,  w: 40, score: 30, color: '#4d9e4d', dark: '#2f6b2f', dmg: 2 }
+  normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },  // 초록
+  fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#7fbf3f', dark: '#4e7a26', dmg: 1 },  // 라임(노란빛 초록)
+  tank:   { hp: 52, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 }   // 보라
 };
 
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
@@ -527,8 +527,8 @@ function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
    ═══════════════════════════════════════ */
 function scaleAt(y) {
   var t = clamp(y / H, 0, 1);
-  var base = 0.85;
-  var target = 1.5;
+  var base = 1.02;
+  var target = 1.32;
   return base + t * (target - base);
 }
 function soldierY() { return H * SOLDIER_Y_RATIO; }   // 방어선(부대 발 밑) y
@@ -541,6 +541,25 @@ var RING_CAPACITY = [1, 7, 12, 18, 24];
 var RING_RADIUS  = [0, 16, 30, 44, 58];   // 좁게 뭉친 원 → 화망이 중앙 라인에 집중
 function squadPositions(count, cx) {
   var positions = [];
+  // 1명: 중앙 혼자
+  if (count === 1) {
+    positions.push({ x: cx, y: squadY(), phase: 0, yPart: 0.5 });
+    return positions;
+  }
+  // 2명: 나란히(좌우) 배치
+  if (count === 2) {
+    positions.push({ x: cx - 15, y: squadY(), phase: 0, yPart: 0.5 });
+    positions.push({ x: cx + 15, y: squadY(), phase: Math.PI, yPart: 0.5 });
+    return positions;
+  }
+  // 3명: 삼각형 배열 — 전방 1(가운데 위) + 후방 2(좌우 아래), 적(위)를 향한 예각
+  if (count === 3) {
+    positions.push({ x: cx,      y: squadY() - 12, phase: 0,             yPart: 0.3 });
+    positions.push({ x: cx - 17, y: squadY() + 9,  phase: Math.PI * 2 / 3, yPart: 0.7 });
+    positions.push({ x: cx + 17, y: squadY() + 9,  phase: Math.PI * 4 / 3, yPart: 0.7 });
+    return positions;
+  }
+  // 4명 이상: 원형 포메이션
   var ring = 0, used = 0;
   while (count > 0 && ring < RING_CAPACITY.length) {
     var n = Math.min(RING_CAPACITY[ring], count);
@@ -661,7 +680,7 @@ function spawnZombie() {
   // 웨이브에 맞춰 군집 규모가 서서히 커짐 (초반엔 적게)
   var clusterN = randInt(1, 2) + Math.min(3, Math.floor((wave - 1) / 3));
   // 대교 상단 폭(화면 중심 ±15%) 안에서 랜덤하게 출발 — 군인 정면으로 고정되지 않음
-  var laneTopHalf = W * 0.21;
+  var laneTopHalf = W * 0.35;
   var clumpCx = W / 2 + rand(-laneTopHalf, laneTopHalf);
   for (var k = 0; k < clusterN; k++) {
     var type = pickZombieType();
@@ -703,7 +722,7 @@ function spawnCard() {
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 + 웨이브가 높을수록 더 많이 맞춰야 함
   var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * 1.5));
   cards.push({
-    x: W / 2 + rand(-W * 0.21, W * 0.21),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
+    x: W / 2 + rand(-W * 0.35, W * 0.35),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
     y: horizonY(),
     baseSpeed: 62,
     kind: kind,
@@ -715,13 +734,13 @@ function spawnCard() {
   });
 }
 
-function spawnBoss() {
+function spawnBoss(spreadX) {
   // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장.
   // 스폰 위치는 지평선(대교) 중앙 — 유저(병사) 위치와 무관하게 고정
   var w = 64 + Math.min(40, wave * 3);
-  var hp = 150 + Math.floor(wave * 40) + Math.floor(wave * wave * 6);
+  var hp = 220 * wave * wave;   // 체력통(보스 HP) — 웨이브² 배수로 확대
   bosses.push({
-    x: W / 2 + rand(-W * 0.08, W * 0.08),   // 대교 중앙 부근, 유저 기준 아님
+    x: W / 2 + (spreadX !== undefined ? spreadX : rand(-W * 0.12, W * 0.12)),   // 대교를 가로질러 분포
     y: horizonY(),
     baseSpeed: 38 + Math.min(26, wave * 2),
     w: w,
@@ -731,7 +750,16 @@ function spawnBoss() {
     wobbleSpeed: 2.2,
     name: '좀비 보스'
   });
-  addPopups(W / 2, H * 0.2, '👹 좀비 보스 등장!', '#7F1D1D', 24);
+}
+/**
+ * 웨이브의 제곱 수만큼 보스를 대교 위에 흩어 스폰
+ */
+function spawnWaveBosses(n) {
+  for (var i = 0; i < n; i++) {
+    var spread = (n === 1) ? 0 : (i / (n - 1) - 0.5) * W * 0.5;
+    spawnBoss(spread);
+  }
+  addPopups(W / 2, H * 0.2, '👹 좀비 보스 ' + n + '마리 등장!', '#7F1D1D', 24);
 }
 
 /* ═══════════════════════════════════════
@@ -977,19 +1005,14 @@ function updateWave(dt) {
     cardTimer = rand(min, min + 3);
   }
 
-  // 랜덤 보스
-  bossTimer -= dt;
-  if (bossTimer <= 0 && phase === 'playing') {
-    spawnBoss();
-    bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
-  }
-
-  // 웨이브 진행
+  // 웨이브 진행 — 웨이브가 바뀔 때마다 웨이브의 제곱 수만큼 보스 등장
   if (waveTimer <= 0) {
     wave++;
     waveTimer = WAVE_DURATION;
     updateRecordsRealTime();
     addPopups(W / 2, H * 0.25, '🌊 웨이브 ' + wave + '!', '#16A34A', 26);
+    var bossN = wave * wave;
+    if (bossN > 0) spawnWaveBosses(bossN);
     updateHUD();
   }
 }
@@ -1044,7 +1067,7 @@ function renderBattlefield() {
 
   // 교량(다리) 상판 — 세로 한 줄(길), 상단(먼 곳, 좁게)에서 화면 하단(병사 지남)까지 쭉 이어짐
   var laneTopY = 0;
-  var laneTopW = W * 0.42;
+  var laneTopW = W * 0.7;
   var laneBotY = H * 0.97;
   var laneBotW = W * 0.9;
   var cxp = W / 2;
