@@ -641,7 +641,8 @@ function fireSquad() {
 }
 
 function getHpForWave() {
-  return 10 + Math.floor(wave * 4);
+  // 웨이브에 맞게 증가하되 출발을 낮게: 1웨이브엔 적게, 고웨이브로 갈수록 증가
+  return 4 + Math.floor(wave * 2.5);
 }
 
 function pickZombieType() {
