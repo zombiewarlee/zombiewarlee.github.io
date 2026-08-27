@@ -738,7 +738,7 @@ function spawnBoss(spreadX) {
   // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장.
   // 스폰 위치는 지평선(대교) 중앙 — 유저(병사) 위치와 무관하게 고정
   var w = 64 + Math.min(40, wave * 3);
-  var hp = 220 * wave * wave;   // 체력통(보스 HP) — 웨이브² 배수로 확대
+  var hp = 220 * wave;   // 체력통(보스 HP) — 웨이브 배수로 확대
   bosses.push({
     x: W / 2 + (spreadX !== undefined ? spreadX : rand(-W * 0.12, W * 0.12)),   // 대교를 가로질러 분포
     y: horizonY(),
@@ -1011,7 +1011,7 @@ function updateWave(dt) {
     waveTimer = WAVE_DURATION;
     updateRecordsRealTime();
     addPopups(W / 2, H * 0.25, '🌊 웨이브 ' + wave + '!', '#16A34A', 26);
-    var bossN = wave * wave;
+    var bossN = wave;
     if (bossN > 0) spawnWaveBosses(bossN);
     updateHUD();
   }
