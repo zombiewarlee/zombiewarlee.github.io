@@ -450,7 +450,7 @@ var W = 0;
 var H = 0;
 var dpr = 1;
 
-var soldier = { x: 260, w: 48, lives: 3, fireTimer: 0, muteFlash: 0, aimAngle: -Math.PI/2, recoil: 0, bob: 0 };
+var soldier = { x: 260, w: 48, lives: 3, fireTimer: 0, muteFlash: 0, aimAngle: -Math.PI/2, recoil: 0, firing: 0, bob: 0 };
 var zombies = [];
 var bosses = [];
 var bullets = [];
@@ -634,6 +634,7 @@ function fireSquad() {
   }
   soldier.muteFlash = 0.09;
   soldier.recoil = 3;
+  soldier.firing = 1;   // 머즐 플래시 트리거
 }
 
 function getHpForWave() {
@@ -734,6 +735,7 @@ function updateSoldier(dt) {
     soldier.fireTimer = FIRE_INTERVAL;
   }
   soldier.recoil = Math.max(0, soldier.recoil - dt * 30);
+  soldier.firing = Math.max(0, soldier.firing - dt * 15);
 }
 
 function updateBullets(dt) {
@@ -1178,10 +1180,11 @@ function drawTrooper(mx, my, s, xyPhase, isCenter) {
   sr(mx - 6 * s, my - 60 * s + bobY, 12 * s, 2 * s, '#3F4A1F');
 
   // 총기 (위로 향해 살짝 기울임) — 소염기/개머리판/조준경 추가
-  var recoilX = soldier.recoil > 0 ? 1.5 : 0;
+  var recoilOffset = soldier.recoil > 0 ? 1.5 * s : 0;
   ctx.save();
-  ctx.translate(mx + 5 * s + recoilX, my - 36 * s + bobY);
+  ctx.translate(mx + 5 * s, my - 36 * s + bobY);
   ctx.rotate(-Math.PI / 2 - 0.08);   // 앞(좀비 쪽)을 향해 위로 겨누도록 90° 회전
+  ctx.translate(-recoilOffset, 0);   // 로컬 좌표로 총 전체를 -x 방향으로 당겨 반동 표현
   // 총열
   sr(0, -2.5 * s, 24 * s, 5 * s, '#3F3F46');
   // 소염기 (총열 끝 2단 사각형)
@@ -1208,6 +1211,16 @@ function drawTrooper(mx, my, s, xyPhase, isCenter) {
   ctx.fill();
   ctx.stroke();
   ctx.fillRect(8 * s, -4 * s, 4 * s, 4 * s);
+  // 머즐 플래시 (발사 시 총구 화염)
+  if (soldier.firing) {
+    ctx.fillStyle = 'rgba(255, 220, 100, 0.9)';
+    ctx.beginPath();
+    ctx.moveTo(29 * s, 0);
+    ctx.lineTo(34 * s, -3 * s);
+    ctx.lineTo(34 * s, 3 * s);
+    ctx.closePath();
+    ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -1626,6 +1639,7 @@ function startGame() {
   soldier.fireTimer = 0;
   soldier.muteFlash = 0;
   soldier.recoil = 0;
+  soldier.firing = 0;
 
   zombies.length = 0;
   bosses.length = 0;
