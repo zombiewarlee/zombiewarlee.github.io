@@ -690,8 +690,15 @@ function spawnCard() {
   var r = Math.random();
   var kind = 'add';
   var value;
-  if (r < 0.70) { value = randInt(1, 3); }       // 작은 보상 (70%) — 병사 1~5로 제한
-  else { value = randInt(4, 5); }                // 큰 보상   (30%) — 4~5는 덜 흔함, 단일 카드 병사 최대 +5
+  // 웨이브에 맞춘 병사 수: 초반엔 낮은 수만, 고웨이브일수록 큰 수 허용
+  if (wave <= 2) {
+    value = randInt(1, 2);          // 초반: +1 ~ +2 만 나옴
+  } else if (wave <= 5) {
+    value = randInt(1, 3);          // 중반 진입: 최대 +3
+  } else {
+    if (r < 0.30) value = randInt(4, 5);   // 고웨이브: 가끔 +4~+5
+    else value = randInt(1, 4);            // 주로 +1~+4
+  }
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
   var hp = Math.max(12, Math.round(value * 2.6));
   cards.push({
