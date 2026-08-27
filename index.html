@@ -1,0 +1,1773 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#BFDBFE">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>아빠의 좀비전쟁 - 무료 좀비 슈팅 게임</title>
+<meta name="description" content="아빠의 좀비전쟁 - 밀려오는 좀비 무리를 물리치세요! 숫자 카드(+과 ×)를 맞혀 군인을 늘리고, 좀비 보스를 사로잡는 무료 좀비 슈팅 게임. 큰 글씨와 넉넉한 터치로 아빠를 위한 게임.">
+<link rel="canonical" href="https://zombiewarlee.github.io/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="아빠의 좀비전쟁 - 무료 좀비 슈팅 게임">
+<meta property="og:description" content="밀려오는 좀비 무리를 숫자 카드로 물리치세요! +와 × 카드를 맞혀 군인을 늘리고 좀비 보스를 쓰러뜨리는 슈팅 게임.">
+<meta property="og:url" content="https://zombiewarlee.github.io/">
+<meta property="og:site_name" content="아빠의 좀비전쟁">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:image" content="https://zombiewarlee.github.io/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="아빠의 좀비전쟁 로고">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="아빠의 좀비전쟁 - 무료 좀비 슈팅 게임">
+<meta name="twitter:description" content="밀려오는 좀비 무리를 숫자 카드로 물리치세요!">
+<meta name="twitter:image" content="https://zombiewarlee.github.io/og-image.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "아빠의 좀비전쟁",
+  "url": "https://zombiewarlee.github.io/",
+  "description": "밀려오는 좀비 무리를 물리치는 슈팅 게임",
+  "inLanguage": "ko"
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "아빠의 좀비전쟁",
+  "url": "https://zombiewarlee.github.io/",
+  "description": "밀려오는 좀비 무리를 물리치세요! 숫자 카드를 맞혀 군인을 늘리고 좀비 보스를 쓰러뜨리는 슈팅 게임.",
+  "inLanguage": "ko",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Web",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "featureList": ["숫자 카드 증강", "좀비 보스", "좌우 이동 슈팅", "기록 자동 저장"]
+}
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FFFFFF;
+  --surface:#FFFFFF;
+  --surface-raised:#F3F4F6;
+  --border:#374151;
+  --border-thin:#9CA3AF;
+  --border-thick:#1F2937;
+  --primary:#2563EB;
+  --primary-hover:#1D4ED8;
+  --primary-light:#DBEAFE;
+  --primary-ring:rgba(37,99,235,0.35);
+  --error:#DC2626;
+  --error-bg:#FEE2E2;
+  --success:#059669;
+  --success-bg:#D1FAE5;
+  --warning:#D97706;
+  --warning-bg:#FEF3C7;
+  --text:#1F2937;
+  --text-secondary:#374151;
+  --text-muted:#6B7280;
+  --accent-zombiewar:#16A34A;
+  --accent-zombiewar-bg:#DCFCE7;
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:20px;
+  --space-6:24px;
+  --space-8:32px;
+  --space-10:40px;
+  --font-family:-apple-system,BlinkMacSystemFont,'Malgun Gothic','맑은 고딕',sans-serif;
+  --text-xs:13px;
+  --text-sm:15px;
+  --text-base:18px;
+  --text-lg:22px;
+  --text-xl:26px;
+  --text-2xl:30px;
+  --text-3xl:38px;
+  --weight-regular:400;
+  --weight-medium:500;
+  --weight-semibold:600;
+  --weight-bold:700;
+  --weight-extrabold:800;
+  --line-height:1.6;
+  --touch-min:56px;
+  --btn-radius:12px;
+  --radius:12px;
+  --radius-sm:8px;
+  --radius-lg:20px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.10);
+  --shadow-md:0 2px 8px rgba(0,0,0,0.12);
+  --shadow-lg:0 4px 16px rgba(0,0,0,0.14);
+  --transition-fast:150ms ease;
+  --transition-base:200ms ease;
+}
+html{
+  touch-action:manipulation;
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-text-size-adjust:100%;
+}
+body{
+  font-family:var(--font-family);
+  background:var(--bg);
+  color:var(--text);
+  height:100vh;height:100dvh;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  -webkit-font-smoothing:antialiased;
+  font-size:var(--text-base);
+  line-height:var(--line-height);
+  font-weight:var(--weight-regular);
+}
+.container{
+  width:100%;max-width:520px;margin:0 auto;padding:0 var(--space-2);
+  display:flex;flex-direction:column;flex:1;min-height:0;
+}
+@supports(padding:max(0px)){
+  .container{padding-left:max(8px,env(safe-area-inset-left));padding-right:max(8px,env(safe-area-inset-right))}
+}
+.screen{display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:max(var(--space-4),env(safe-area-inset-bottom))}
+.screen.show{display:flex}
+.screen-game{overflow:hidden;padding-bottom:0;touch-action:none;position:relative}
+
+.start-hero{padding:var(--space-8) 0 var(--space-4);text-align:center;flex-shrink:0}
+.start-title{font-size:clamp(30px,10vw,44px);font-weight:var(--weight-extrabold);color:var(--text);line-height:1.2;letter-spacing:-0.5px}
+.start-title .accent{color:var(--accent-zombiewar)}
+.start-sub{font-size:var(--text-lg);color:var(--text-secondary);margin-top:var(--space-2);font-weight:var(--weight-bold)}
+.start-sub b{color:var(--accent-zombiewar);font-weight:var(--weight-extrabold)}
+.start-sub-small{font-size:var(--text-sm);color:var(--text-muted);margin-top:var(--space-1)}
+
+.btn-start{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);
+  width:100%;margin-top:var(--space-5);padding:var(--space-4) var(--space-5);
+  border-radius:var(--btn-radius);border:3px solid var(--accent-zombiewar);
+  background:var(--accent-zombiewar);color:#FFFFFF;font-size:var(--text-xl);
+  font-weight:var(--weight-extrabold);font-family:var(--font-family);cursor:pointer;
+  min-height:var(--touch-min);box-shadow:var(--shadow-md);line-height:1.3;
+  transition:all var(--transition-base);-webkit-tap-highlight-color:transparent;
+}
+.btn-start:active{background:#15803D;transform:scale(0.97)}
+.btn-start .btn-tip{font-size:var(--text-sm);font-weight:var(--weight-medium);opacity:0.9}
+
+.records-summary{margin-top:var(--space-6);flex-shrink:0}
+.section-title{font-size:var(--text-lg);font-weight:var(--weight-extrabold);color:var(--text);text-align:center;margin-bottom:var(--space-3)}
+.records-list{display:flex;flex-direction:column;gap:var(--space-2)}
+.record-row{display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);padding:var(--space-3) var(--space-5);background:var(--surface-raised);border:2px solid var(--border);border-radius:var(--btn-radius)}
+.record-diff{font-size:var(--text-base);font-weight:var(--weight-bold);color:var(--text)}
+.record-best{display:flex;flex-direction:column;align-items:flex-end}
+.record-time{font-size:clamp(16px,5vw,22px);font-weight:var(--weight-extrabold);color:var(--text);line-height:1.2;font-variant-numeric:tabular-nums}
+.record-score{font-size:var(--text-xs);color:var(--text-muted);font-weight:var(--weight-semibold);line-height:1.2}
+
+.start-actions{display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-6);flex-shrink:0}
+
+.btn-help{
+  display:flex;align-items:center;justify-content:center;gap:var(--space-2);
+  width:100%;padding:var(--space-3) var(--space-5);
+  border-radius:var(--btn-radius);border:2.5px solid var(--border-thin);
+  background:var(--surface);color:var(--text-secondary);font-size:var(--text-base);
+  font-weight:var(--weight-bold);font-family:var(--font-family);cursor:pointer;
+  transition:all var(--transition-base);min-height:44px;line-height:1.2;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-help:active{background:var(--surface-raised);transform:scale(0.98)}
+
+.modal-help{max-height:80vh;overflow-y:auto}
+.help-content{text-align:left;margin:var(--space-4) 0}
+.help-section{margin-bottom:var(--space-4)}
+.help-section h3{font-size:var(--text-lg);font-weight:var(--weight-bold);color:var(--accent-zombiewar);margin-bottom:var(--space-2)}
+.help-section p{font-size:var(--text-sm);color:var(--text-secondary);line-height:1.6;margin-bottom:var(--space-1)}
+.help-section p b{color:var(--text);font-weight:var(--weight-semibold)}
+.help-note{background:var(--warning-bg);border:2px solid var(--warning);border-radius:var(--radius-sm);padding:var(--space-3);font-size:var(--text-sm);color:var(--text-secondary);margin-top:var(--space-3)}
+
+.btn-portal{
+  display:flex;align-items:center;justify-content:center;gap:var(--space-2);
+  width:100%;margin-top:var(--space-3);padding:var(--space-3) var(--space-5);
+  border-radius:var(--btn-radius);border:2.5px solid var(--border);
+  background:var(--surface-raised);color:var(--text);font-size:var(--text-base);
+  font-weight:var(--weight-bold);font-family:var(--font-family);cursor:pointer;
+  transition:all var(--transition-base);min-height:44px;line-height:1.2;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-portal:active{background:var(--border-thin);transform:scale(0.98)}
+
+.canvas-wrap{
+  position:relative;width:100%;flex:1;min-height:0;
+  border:3px solid var(--border-thick);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);overflow:hidden;touch-action:none;
+  -webkit-tap-highlight-color:transparent;margin:var(--space-1) auto 0;
+}
+.canvas-wrap canvas{display:block;width:100%;height:100%}
+
+.hud{
+  position:absolute;top:0;left:0;right:0;z-index:10;pointer-events:none;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:var(--space-2) var(--space-3);
+  background:linear-gradient(180deg,rgba(255,255,255,0.92),rgba(255,255,255,0));
+}
+.hud-left{display:flex;align-items:center;gap:var(--space-2)}
+.hud-chip{
+  background:rgba(255,255,255,0.95);border:2px solid var(--border);border-radius:999px;
+  padding:var(--space-1) var(--space-3);font-weight:var(--weight-extrabold);
+  font-size:var(--text-base);color:var(--text);line-height:1.2;box-shadow:var(--shadow-sm);
+  font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.hud-chip .chip-label{font-size:var(--text-xs);color:var(--text-muted);font-weight:var(--weight-bold)}
+.hud-chip.wave{color:var(--accent-zombiewar)}
+.hud-chip.lives{color:#DC2626}
+.hud-chip.score{color:var(--primary)}
+
+.btn-back-home{
+  position:absolute;top:var(--space-4);right:var(--space-3);z-index:11;
+  width:48px;height:48px;border-radius:50%;border:2px solid var(--border);
+  background:var(--surface-raised);color:var(--text);font-size:22px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);
+  transition:all var(--transition-base);-webkit-tap-highlight-color:transparent;opacity:0.8;
+}
+.btn-back-home:active{transform:scale(0.9);background:var(--border-thin);opacity:1}
+
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.70);display:none;
+  justify-content:center;z-index:100;padding:var(--space-6);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+}
+.modal-overlay.show{display:flex}
+.modal{
+  position:relative;background:var(--surface);border-radius:var(--radius-lg);
+  padding:var(--space-8) var(--space-6);width:100%;max-width:400px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.50);text-align:center;
+  animation:modalIn 250ms ease;border:3px solid var(--border);margin:auto;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal h2{font-size:clamp(20px,6vw,32px);font-weight:var(--weight-extrabold);margin-bottom:var(--space-3);color:var(--text);line-height:1.3}
+.modal-header{display:flex;align-items:center;justify-content:center;gap:var(--space-3);margin-bottom:var(--space-3)}
+.modal-header h2{margin-bottom:0}
+.modal p{font-size:clamp(16px,4vw,20px);color:var(--text-secondary);margin-bottom:var(--space-4);line-height:var(--line-height)}
+.modal-emoji{font-size:clamp(32px,10vw,48px);display:block}
+
+.modal-actions{display:flex;gap:var(--space-3);margin-top:var(--space-4)}
+.modal-actions.column{flex-direction:column}
+.btn{
+  flex:1;padding:var(--space-4) var(--space-5);border-radius:var(--btn-radius);
+  border:none;font-size:var(--text-lg);font-weight:var(--weight-bold);
+  font-family:var(--font-family);cursor:pointer;transition:all var(--transition-base);
+  min-height:var(--touch-min);line-height:1.3;-webkit-tap-highlight-color:transparent;
+}
+.btn-primary{background:var(--primary);color:#FFFFFF}
+.btn-primary:active{background:var(--primary-hover);transform:scale(0.97)}
+.btn-secondary{background:var(--surface-raised);color:var(--text);border:2.5px solid var(--border)}
+.btn-secondary:active{background:var(--border-thin);transform:scale(0.97)}
+
+.completion-stats{display:flex;gap:var(--space-3);justify-content:center;margin:var(--space-3) 0 var(--space-4);flex-wrap:nowrap}
+.stat{text-align:center;min-width:0}
+.stat-val{font-size:clamp(16px,5vw,24px);font-weight:var(--weight-extrabold);color:var(--text);display:block;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.stat-label{font-size:clamp(12px,3vw,14px);color:var(--text-muted);display:block;margin-top:var(--space-1);font-weight:var(--weight-semibold);white-space:nowrap}
+
+.new-record-badge{background:linear-gradient(135deg,#F59E0B,#D97706);color:#FFFFFF;font-size:var(--text-lg);font-weight:var(--weight-extrabold);padding:var(--space-2) var(--space-4);border-radius:var(--radius);margin:var(--space-3) 0;animation:pulse 1s ease infinite;display:block}
+.new-record-badge[hidden]{display:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+
+button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <section id="screenStart" class="screen show" aria-label="시작 화면">
+    <div class="start-hero">
+      <h1 class="start-title">🧟 아빠의<br><span class="accent">좀비전쟁</span></h1>
+      <p class="start-sub">밀려오는 좀비 무리를 <b>숫자 카드</b>로 물리치세요!</p>
+      <p class="start-sub-small">좌우 이동 · 자동 사격 · 카드 증강 · 좀비 보스</p>
+    </div>
+
+    <button class="btn-start" id="btnStart" type="button" aria-label="게임 시작">
+      ⚔️ 전쟁 시작
+      <span class="btn-tip">좌우로 움직여 사격하세요</span>
+    </button>
+
+    <div class="records-summary">
+      <h2 class="section-title">🏆 최고 기록</h2>
+      <div class="records-list" id="recordsList"></div>
+    </div>
+
+    <div class="start-actions">
+      <button class="btn-help" id="btnHelp" type="button">📖 게임 규칙</button>
+      <button class="btn-portal" type="button">🎮 다른 게임하기</button>
+    </div>
+  </section>
+
+  <section id="screenGame" class="screen screen-game" aria-label="게임 화면">
+    <div class="canvas-wrap" id="canvasWrap">
+      <canvas id="gameCanvas" aria-label="좀비전쟁 게임 화면. 손가락이나 키보드 좌우 방향키로 군인 부대를 움직여, 상단 한 줄로 걸어 내려오는 좀비와 숫자 카드를 사격하세요."></canvas>
+      <div class="hud" id="hud">
+        <div class="hud-left">
+          <span class="hud-chip wave" id="hudWave">🌊 <span id="hudWaveVal">1</span></span>
+          <span class="hud-chip lives" id="hudLives">🪖 <span id="hudLivesVal">3</span></span>
+        </div>
+        <span class="hud-chip score" id="hudScore">⭐ <span id="hudScoreVal">0</span></span>
+      </div>
+    </div>
+    <button class="btn-back-home" id="btnBackHome" type="button" aria-label="홈으로">🏠</button>
+  </section>
+</div>
+
+<div class="modal-overlay" id="modalHelp">
+  <div class="modal modal-help">
+    <div class="modal-header">
+      <span class="modal-emoji">📖</span>
+      <h2>게임 규칙</h2>
+    </div>
+    <div class="help-content">
+      <div class="help-section">
+        <h3>🎮 조작법</h3>
+        <p><b>모바일:</b> 화면을 터치하고 좌우로 끌면 부대가 움직여요.</p>
+        <p><b>키보드:</b> ←/→ 방향키 (또는 A/D) 로 이동.</p>
+        <p><b>사격:</b> 부대의 군인들이 위쪽으로 <b>자동으로</b> 계속 쏴요.</p>
+        <p><b>군인 수만큼 총알이 나가요!</b> 부대를 상단에서 오는 한 줄(길)에 맞춰 정렬하세요.</p>
+      </div>
+      <div class="help-section">
+        <h3>🃏 숫자 카드</h3>
+        <p>한 줄(길)을 따라 숫자 카드가 걸어 내려와요.</p>
+        <p><b>+N</b> 카드를 맞히면 군인 <b>N명 추가</b>, <b>×K</b> 카드를 맞히면 군인이 <b>K배</b>로 늘어나요.</p>
+        <p><b>군인이 많을수록 총알과 화력도 그만큼 늘어나요!</b></p>
+      </div>
+      <div class="help-section">
+        <h3>🧟 적</h3>
+        <p><b>🟢 좀비:</b> 기본 몬스터</p>
+        <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
+        <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
+        <p><b>👹 좀비 보스:</b> 아무 때나 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 쓰러뜨리면 큰 보상!</p>
+      </div>
+      <div class="help-section">
+        <h3>🪖 목숨 (군인)</h3>
+        <p>좀비가 부대의 방어선까지 오면 <b>군인이 잡혀 줄어요.</b></p>
+        <p>군인이 <b>0이 되면 게임 오버.</b> 카드로 군인을 계속 늘리세요!</p>
+      </div>
+      <div class="help-note">좀비와 아이템은 상단의 한 줄(길)을 따라 내려와요. 부대를 그 라인에 맞춰 정렬하고, 카드를 맞혀 부대를 키우는 게 승리의 열쇠!</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnHelpClose" type="button">알겠습니다</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalGameOver">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-emoji">💀</span>
+      <h2>전쟁 종료</h2>
+    </div>
+    <p id="goMessage">부대가 모두 전멸했어요...</p>
+    <div id="goNewRecord" class="new-record-badge" hidden>🏆 새 기록!</div>
+    <div class="completion-stats">
+      <div class="stat"><span class="stat-val" id="goWave">1</span><span class="stat-label">웨이브</span></div>
+      <div class="stat"><span class="stat-val" id="goKills">0</span><span class="stat-label">좀비 처치</span></div>
+      <div class="stat"><span class="stat-val" id="goScore">0</span><span class="stat-label">점수</span></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="btnGoRetry" type="button">🔄 다시 하기</button>
+      <button class="btn btn-secondary" id="btnGoHome" type="button">🏠 홈으로</button>
+    </div>
+    <button class="btn-portal" type="button">🎮 다른 게임하기</button>
+  </div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ═══════════════════════════════════════
+   CONSTANTS
+   ═══════════════════════════════════════ */
+var RECORDS_KEY = 'zombiewar_records_v1';
+var PORTAL_URL = 'https://appa-games.github.io/';
+
+var SOLDIER_Y_RATIO = 0.86;            // 부대 중심 y 위치 (화면 비율)
+var SOLDIER_SPEED = 320;               // px/sec (좌우 이동)
+var FIRE_INTERVAL = 0.20;              // 병사 1명이 쏘는 발사 간격(초)
+var BULLET_SPEED = 420;                // 총알 상승 속도
+var HORIZON_RATIO = 0.5;               // 지평선(먼 땅) y 비율 — 좀비/아이템이 여기서 걸어 나옴
+var GUN_Y = 0.78;                      // 병사 총구 기준 y 비율
+var MAX_BULLETS_BASE = 60;             // 기본 최대 총알
+var BULLETS_PER_MEMBER = 7;            // 병사 1명당 허용 총알 수
+var MAX_PARTICLES = 500;
+
+var ZOMBIE_TYPES = {
+  normal: { hp: 14, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },
+  fast:   { hp: 10, speed: 100, w: 22, score: 15, color: '#d9822b', dark: '#a3551a', dmg: 1 },
+  tank:   { hp: 34, speed: 26,  w: 40, score: 30, color: '#7d4fb0', dark: '#562f82', dmg: 2 }
+};
+
+var WAVE_DURATION = 22;                // 웨이브당 시간(초)
+var BOSS_MIN_DELAY = 20;               // 보스 최소 출몰 간격(초)
+var BOSS_MAX_DELAY = 32;
+var CARD_BASE_INTERVAL = 6;            // 카드 기본 등장 간격(초)
+
+/* ═══════════════════════════════════════
+   DOM REFERENCES
+   ═══════════════════════════════════════ */
+var screenStart = document.getElementById('screenStart');
+var screenGame = document.getElementById('screenGame');
+var recordsList = document.getElementById('recordsList');
+var btnStart = document.getElementById('btnStart');
+var canvasWrap = document.getElementById('canvasWrap');
+var gameCanvas = document.getElementById('gameCanvas');
+var ctx = gameCanvas.getContext('2d');
+
+var hudWaveVal = document.getElementById('hudWaveVal');
+var hudLivesVal = document.getElementById('hudLivesVal');
+var hudScoreVal = document.getElementById('hudScoreVal');
+
+var modalGameOver = document.getElementById('modalGameOver');
+var goMessage = document.getElementById('goMessage');
+var goWave = document.getElementById('goWave');
+var goKills = document.getElementById('goKills');
+var goScore = document.getElementById('goScore');
+var goNewRecord = document.getElementById('goNewRecord');
+var btnGoRetry = document.getElementById('btnGoRetry');
+var btnGoHome = document.getElementById('btnGoHome');
+var btnHelp = document.getElementById('btnHelp');
+var modalHelp = document.getElementById('modalHelp');
+var btnHelpClose = document.getElementById('btnHelpClose');
+var btnBackHome = document.getElementById('btnBackHome');
+var portalBtns = document.querySelectorAll('.btn-portal');
+
+/* ═══════════════════════════════════════
+   GAME STATE
+   ═══════════════════════════════════════ */
+var phase = 'idle';
+var running = false;
+var rafId = null;
+var lastTs = 0;
+var W = 0;
+var H = 0;
+var dpr = 1;
+
+var soldier = { x: 260, w: 48, lives: 3, fireTimer: 0, muteFlash: 0, aimAngle: -Math.PI/2, recoil: 0, bob: 0 };
+var zombies = [];
+var bosses = [];
+var bullets = [];
+var cards = [];
+var particles = [];
+var popups = [];
+
+var wave = 1;
+var score = 0;
+var kills = 0;
+var waveTimer = 0;
+var cardTimer = 0;
+var bossTimer = 0;
+var gameTime = 0;
+
+/* ═══════════════════════════════════════
+   RECORDS (localStorage)
+   ═══════════════════════════════════════ */
+function getDefaultRecords() {
+  return { bestWave: 0, bestKills: 0, totalKills: 0, totalGames: 0 };
+}
+function loadRecords() {
+  try {
+    var raw = localStorage.getItem(RECORDS_KEY);
+    if (!raw) return getDefaultRecords();
+    var data = JSON.parse(raw);
+    var def = getDefaultRecords();
+    for (var k in def) {
+      if (typeof data[k] !== 'number' || data[k] < 0) data[k] = def[k];
+    }
+    return data;
+  } catch (e) { return getDefaultRecords(); }
+}
+function saveRecords(records) {
+  try { localStorage.setItem(RECORDS_KEY, JSON.stringify(records)); } catch (e) {}
+}
+function renderStartRecords() {
+  var records = loadRecords();
+  var html = '';
+  html += '<div class="record-row"><span class="record-diff">최고 웨이브</span><span class="record-best"><span class="record-time">' + (records.bestWave > 0 ? records.bestWave + '번' : '--') + '</span></span></div>';
+  html += '<div class="record-row"><span class="record-diff">최다 처치</span><span class="record-best"><span class="record-time">' + (records.bestKills > 0 ? records.bestKills + '마리' : '--') + '</span></span></div>';
+  html += '<div class="record-row"><span class="record-diff">총 처치</span><span class="record-best"><span class="record-time">' + records.totalKills + '마리</span></span></div>';
+  recordsList.innerHTML = html;
+}
+function updateRecordsOnFinish() {
+  var records = loadRecords();
+  var isNew = false;
+  if (wave > records.bestWave) { records.bestWave = wave; isNew = true; }
+  if (kills > records.bestKills) { records.bestKills = kills; isNew = true; }
+  records.totalKills += kills;
+  records.totalGames++;
+  saveRecords(records);
+  return isNew;
+}
+function updateRecordsRealTime() {
+  var records = loadRecords();
+  var changed = false;
+  if (wave > records.bestWave) { records.bestWave = wave; changed = true; }
+  if (kills > records.bestKills) { records.bestKills = kills; changed = true; }
+  if (changed) saveRecords(records);
+}
+
+/* ═══════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════ */
+function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+function formatNumber(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function rand(a, b) { return a + Math.random() * (b - a); }
+function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
+
+/* ═══════════════════════════════════════
+   PERSPECTIVE — 2.5D 원근감
+   멀리(위, 지평선)에서 가까이(아래, 병사)로 올수록 커진다.
+   ═══════════════════════════════════════ */
+function scaleAt(y) {
+  var t = clamp(y / H, 0, 1);
+  var base = 0.85;
+  var target = 1.5;
+  return base + t * (target - base);
+}
+function soldierY() { return H * SOLDIER_Y_RATIO; }   // 방어선(부대 발 밑) y
+function horizonY() { return H * 0.04; }               // 좀비/아이템이 걸어 나오는 화면 상단(먼 땅) 라인
+function squadY()   { return H * SOLDIER_Y_RATIO; }    // 부대 원형 포메이션 기준 y
+
+/* ── Squad(원형 포메이션) — 병사 수만큼 병사가 원을 이루어 배치된다 ──
+   반환: [ {x, y, phase} ]  — y는 몸통 중심, phase는 걷기 애니메이션 위상 */
+var RING_CAPACITY = [1, 7, 12, 18, 24];
+var RING_RADIUS  = [0, 16, 30, 44, 58];   // 좁게 뭉친 원 → 화망이 중앙 라인에 집중
+function squadPositions(count, cx) {
+  var positions = [];
+  var ring = 0, used = 0;
+  while (count > 0 && ring < RING_CAPACITY.length) {
+    var n = Math.min(RING_CAPACITY[ring], count);
+    var r = RING_RADIUS[ring];
+    if (n === 1) {
+      positions.push({ x: cx, y: squadY(), phase: 0, yPart: 0.5 });
+    } else {
+      for (var i = 0; i < n; i++) {
+        var a = (i / n) * Math.PI * 2 - Math.PI / 2;
+        var sinA = Math.sin(a);
+        positions.push({
+          x: cx + Math.cos(a) * r,
+          y: squadY() + sinA * r * 0.55,
+          phase: (i / n) * Math.PI * 2,
+          yPart: (sinA + 1) / 2
+        });
+      }
+    }
+    count -= n;
+    ring++;
+  }
+  return positions;
+}
+
+/* ═══════════════════════════════════════
+   CANVAS SIZING (DPR)
+   ═══════════════════════════════════════ */
+function resizeCanvas() {
+  var rect = canvasWrap.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1;
+  if (!W || !H) {
+    W = Math.max(260, rect.width);
+    H = Math.max(360, rect.height);
+  }
+  gameCanvas.width = W * dpr;
+  gameCanvas.height = H * dpr;
+  gameCanvas.style.width = W + 'px';
+  gameCanvas.style.height = H + 'px';
+  soldier.x = clamp(soldier.x, soldier.w / 2, W - soldier.w / 2);
+}
+
+/* ═══════════════════════════════════════
+   PARTICLES / POPUPS
+   ═══════════════════════════════════════ */
+function addParticles(x, y, color, count, speed, life) {
+  for (var i = 0; i < count; i++) {
+    if (particles.length >= MAX_PARTICLES) particles.shift();
+    var a = Math.random() * Math.PI * 2;
+    var sp = speed * (0.3 + Math.random() * 0.9);
+    particles.push({
+      x: x, y: y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp - 40,
+      color: color,
+      life: life || 0.6,
+      maxLife: life || 0.6,
+      size: 2 + Math.random() * 4
+    });
+  }
+}
+function addPopups(x, y, text, color, size) {
+  popups.push({ x: x, y: y, text: text, color: color, size: size || 16, life: 1.0, maxLife: 1.0 });
+}
+
+/* ═══════════════════════════════════════
+   SPAWNING
+   ═══════════════════════════════════════ */
+function maxBullets() { return MAX_BULLETS_BASE + soldier.lives * BULLETS_PER_MEMBER; }
+
+// 병사 1명이 자기 위치에서 직선(위)으로 총알을 발사한다
+function spawnBullet(x, y) {
+  if (bullets.length >= maxBullets()) return;
+  var power = bulletDamage(soldier.lives);
+  bullets.push({
+    x: x,
+    y: y,
+    vy: -BULLET_SPEED,
+    power: power,
+    trail: []
+  });
+}
+function bulletDamage(lives) {
+  return 1 + Math.floor(lives / 6);
+}
+
+// 부대 전체 발사: 병사 수만큼의 총알이 동시에 직선으로 나감
+function fireSquad() {
+  var positions = squadPositions(soldier.lives, soldier.x);
+  for (var i = 0; i < positions.length; i++) {
+    spawnBullet(positions[i].x, positions[i].y - 34);
+  }
+  soldier.muteFlash = 0.09;
+  soldier.recoil = 3;
+}
+
+function getHpForWave() {
+  return 4 + Math.floor(wave * 2);
+}
+
+function pickZombieType() {
+  var tankChance = wave >= 4 ? Math.min(0.18, 0.04 + wave * 0.008) : 0;
+  var fastChance = wave >= 2 ? Math.min(0.3, 0.1 + wave * 0.012) : 0;
+  var r = Math.random();
+  if (r < tankChance) return 'tank';
+  if (r < tankChance + fastChance) return 'fast';
+  return 'normal';
+}
+
+function spawnZombie() {
+  // 뭉쳐서(군집) 오는 연출: 한 번에 여러 마리가 다리 위에서 함께 걸어 나옴
+  var clusterN = randInt(2, 4) + (wave >= 3 ? 2 : 0);
+  // 대교 상단 폭(화면 중심 ±15%) 안에서 랜덤하게 출발 — 군인 정면으로 고정되지 않음
+  var laneTopHalf = W * 0.21;
+  var clumpCx = W / 2 + rand(-laneTopHalf, laneTopHalf);
+  for (var k = 0; k < clusterN; k++) {
+    var type = pickZombieType();
+    var cfg = ZOMBIE_TYPES[type];
+    var spdBonus = 1 + Math.min(0.55, wave * 0.02);
+    // 클러스터 중심 근처에 서로 가깝게 뭉침 + 약간 앞뒤로(걸어오는 깊이감)
+    var cx = clumpCx + rand(-16, 16);
+    var cy = horizonY() + rand(-20, 20);
+    zombies.push({
+      x: cx,
+      y: cy,
+      baseSpeed: cfg.speed * spdBonus,
+      type: type,
+      w: cfg.w,
+      hp: cfg.hp + getHpForWave(),
+      maxHp: cfg.hp + getHpForWave(),
+      scale: scaleAt(cy),
+      wobble: rand(0, Math.PI * 2),
+      wobbleSpeed: rand(3, 6),
+      dead: false
+    });
+  }
+}
+
+function spawnCard() {
+  var r = Math.random();
+  var kind = 'add';
+  var value;
+  if (r < 0.4) { value = randInt(2, 4); }        // 작은 보상
+  else if (r < 0.75) { value = randInt(5, 9); } // 중간 보상
+  else { value = randInt(11, 15); }              // 큰 보상
+  // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
+  var hp = Math.max(6, Math.round(value * 1.4));
+  cards.push({
+    x: soldier.x + rand(-8, 8),   // 세로 한 줄(길)을 따라, 부대 정면
+    y: horizonY(),
+    baseSpeed: 62,
+    kind: kind,
+    value: value,
+    hp: hp,
+    maxHp: hp,
+    spin: rand(0, Math.PI * 2),
+    rot: 0
+  });
+}
+
+function spawnBoss() {
+  var hp = 40 + Math.floor(wave * 14);
+  var w = 64;
+  bosses.push({
+    x: soldier.x,                // 길 한가운데로 걸어 나옴
+    y: horizonY(),
+    baseSpeed: 38,
+    w: w,
+    hp: hp,
+    maxHp: hp,
+    wobble: 0,
+    wobbleSpeed: 2.2,
+    name: '좀비 보스'
+  });
+  addPopups(W / 2, H * 0.2, '👹 좀비 보스 등장!', '#7F1D1D', 24);
+}
+
+/* ═══════════════════════════════════════
+   UPDATE — ENTITIES
+   ═══════════════════════════════════════ */
+function updateSoldier(dt) {
+  if (keys.left) soldier.x -= SOLDIER_SPEED * dt;
+  if (keys.right) soldier.x += SOLDIER_SPEED * dt;
+  soldier.x = clamp(soldier.x, 40, W - 40);
+  soldier.bob += dt * 4;
+  soldier.muteFlash = Math.max(0, soldier.muteFlash - dt);
+
+  // 부대 전체가 같은 박자로 발사 (병사 수만큼 총알)
+  soldier.fireTimer -= dt;
+  if (soldier.fireTimer <= 0) {
+    fireSquad();
+    soldier.fireTimer = FIRE_INTERVAL;
+  }
+  soldier.recoil = Math.max(0, soldier.recoil - dt * 30);
+}
+
+function updateBullets(dt) {
+  for (var i = bullets.length - 1; i >= 0; i--) {
+    var b = bullets[i];
+    b.y += b.vy * dt;
+    b.vy = -BULLET_SPEED;
+
+    b.trail.push({ x: b.x, y: b.y });
+    if (b.trail.length > 18) b.trail.shift();
+
+    var hitSomething = false;
+    // 카드 충돌 — 필요한 총알 수(HP)만큼 모두 맞춰야 먹을 수 있음
+    for (var ci = cards.length - 1; ci >= 0; ci--) {
+      var c = cards[ci];
+      var cs = scaleAt(c.y) || 0.6;
+      var cw = 56 * cs;
+      if (Math.abs(c.x - b.x) < cw / 2 + 8 && Math.abs(c.y - b.y) < cw * 0.72) {
+        c.hp -= b.power;
+        if (c.hp <= 0) {
+          applyCard(c);
+          addParticles(c.x, c.y, '#FCD34D', 20, 200, 0.5);
+          cards.splice(ci, 1);
+        } else {
+          // 아직 필요한 총알이 남음 — 맞는 반짝임 표시
+          addParticles(c.x, c.y, '#FFFFFF', 4, 130, 0.25);
+        }
+        hitSomething = true;
+        break;
+      }
+    }
+    if (hitSomething) { bullets.splice(i, 1); continue; }
+
+    // 좀비 충돌
+    if (hitZombies(b)) { bullets.splice(i, 1); continue; }
+    // 보스 충돌
+    if (hitBosses(b)) { bullets.splice(i, 1); continue; }
+
+    if (b.y < -60) { bullets.splice(i, 1); }
+  }
+}
+
+function hitZombies(b) {
+  var hit = false;
+  for (var zi = zombies.length - 1; zi >= 0; zi--) {
+    var z = zombies[zi];
+    if (z.dead) continue;
+    var zs = scaleAt(z.y) || 0.7;
+    var zcx = z.x;
+    var zcy = z.y - 16 * zs;         // 신체 중심 (발이 아니라 몸통)
+    var hw = z.w * 0.62 * zs + 4;    // 가로 판정 반폭 (여유 포함)
+    var hh = z.w * 0.9 * zs + 4;     // 세로 판정 반높이
+    if (Math.abs(zcx - b.x) < hw && Math.abs(zcy - b.y) < hh) {
+      z.hp -= b.power;
+      addParticles(b.x, zcy, '#B91C1C', 5, 120, 0.4);
+      if (z.hp <= 0) {
+        killZombie(zi, z);
+      }
+      hit = true;
+      break;
+    }
+  }
+  return hit;
+}
+
+function hitBosses(b) {
+  var hit = false;
+  for (var bi = bosses.length - 1; bi >= 0; bi--) {
+    var bz = bosses[bi];
+    var zs = scaleAt(bz.y) || 0.7;
+    var bcy = bz.y - 24 * zs;        // 보스 몸통 중심
+    var hw = bz.w * 0.6 + 6;
+    var hh = bz.w * 0.55 + 6;
+    if (Math.abs(bz.x - b.x) < hw && Math.abs(bcy - b.y) < hh) {
+      bz.hp -= b.power;
+      addParticles(b.x, bcy, '#F9A8D4', 8, 150, 0.4);
+      if (bz.hp <= 0) {
+        killBoss(bi, bz);
+      }
+      hit = true;
+      break;
+    }
+  }
+  return hit;
+}
+
+function killZombie(zi, z) {
+  z.dead = true;
+  kills++;
+  score += ZOMBIE_TYPES[z.type].score;
+  addParticles(z.x, z.y, ZOMBIE_TYPES[z.type].color, 16, 180, 0.6);
+  addPopups(z.x, z.y - 10, '+' + ZOMBIE_TYPES[z.type].score, '#16A34A', 15);
+  updateHUD();
+}
+
+function killBoss(bi, bz) {
+  bosses.splice(bi, 1);
+  kills++; 
+  score += 150 + Math.floor(wave * 30);
+  addParticles(bz.x, bz.y, '#FBBF24', 40, 260, 0.9);
+  addParticles(bz.x, bz.y, '#F97316', 30, 200, 0.8);
+  addPopups(bz.x, bz.y - 10, '+보너스!', '#F59E0B', 22);
+  // 보스 처치 보상: 군인 +3
+  soldier.lives += 3;
+  addPopups(W/2, H * 0.3, '🪖 군인 +3 명!', '#16A34A', 22);
+  updateHUD();
+}
+
+function applyCard(c) {
+  if (c.kind === 'add') {
+    soldier.lives += c.value;
+    addPopups(c.x, c.y, '🪖 군인 +' + c.value + '명!', '#16A34A', 22);
+  } else {
+    var before = soldier.lives;
+    soldier.lives = Math.round(soldier.lives * c.value);
+    addPopups(c.x, c.y, '×' + c.value + '  ' + formatNumber(before) + ' → ' + formatNumber(soldier.lives), '#F59E0B', 22);
+  }
+  updateHUD();
+}
+
+function updateZombies(dt) {
+  var sy = soldierY();
+  var hitLine = sy + 6;
+  for (var i = zombies.length - 1; i >= 0; i--) {
+    var z = zombies[i];
+    if (z.dead) { zombies.splice(i, 1); continue; }
+    // 땅을 걷는 원근감 속도: 멀리(위 지평선)에선 천천히, 가까울수록 빠르게
+    z.y += z.baseSpeed * scaleAt(z.y) * dt;
+    z.scale = scaleAt(z.y);
+    z.wobble += z.wobbleSpeed * dt * scaleAt(z.y);
+
+    if (z.y >= hitLine) {
+      soldierHit(ZOMBIE_TYPES[z.type].dmg);
+      addParticles(z.x, hitLine, ZOMBIE_TYPES[z.type].color, 12, 180, 0.6);
+      zombies.splice(i, 1);
+    }
+  }
+}
+
+function updateBosses(dt) {
+  var sy = soldierY();
+  var hitLine = sy + 8;
+  for (var i = bosses.length - 1; i >= 0; i--) {
+    var bz = bosses[i];
+    bz.y += bz.baseSpeed * scaleAt(bz.y) * dt;
+    bz.wobble += bz.wobbleSpeed * dt * scaleAt(bz.y);
+    if (bz.y >= hitLine) {
+      soldierHit(4);
+      addParticles(bz.x, hitLine, '#7C2D12', 20, 200, 0.8);
+      addPopupShake();
+      bosses.splice(i, 1);
+    }
+  }
+}
+
+function addPopupShake() {
+  addPopups(W / 2, H * 0.3, '💥 부대 충격!', '#DC2626', 22);
+}
+
+function soldierHit(dmg) {
+  if (phase !== 'playing') return;
+  soldier.lives -= dmg;
+  soldier.lives = Math.max(0, soldier.lives);
+  audioHit();
+  addPopups(soldier.x, soldierY() - 50, '-' + dmg + ' 🪖', '#DC2626', 20);
+  updateHUD();
+  if (soldier.lives <= 0) {
+    endGame();
+  }
+}
+
+function updateCards(dt) {
+  for (var i = cards.length - 1; i >= 0; i--) {
+    var c = cards[i];
+    // 아이템도 길을 따라 땅 위로 걸어(떠서) 내려옴, 원근감 속도
+    c.y += c.baseSpeed * scaleAt(c.y) * dt;
+    c.rot += dt * 1.5;
+    if (c.y > H + 60) { cards.splice(i, 1); }
+  }
+}
+
+function updateParticles(dt) {
+  for (var i = particles.length - 1; i >= 0; i--) {
+    var p = particles[i];
+    p.life -= dt;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    p.vy += 600 * dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= (1 - 2 * dt);
+  }
+}
+
+function updatePopups(dt) {
+  for (var i = popups.length - 1; i >= 0; i--) {
+    var p = popups[i];
+    p.life -= dt;
+    p.y -= 40 * dt;
+    if (p.life <= 0) popups.splice(i, 1);
+  }
+}
+
+/* ═══════════════════════════════════════
+   WAVES / TIMERS
+   ═══════════════════════════════════════ */
+function spawnRate() { return Math.min(6, 1.2 + wave * 0.22); }
+
+function updateWave(dt) {
+  gameTime += dt;
+  waveTimer -= dt;
+
+  // 좀비 지속 스폰
+  if (Math.random() < spawnRate() * dt) {
+    spawnZombie();
+  }
+
+  // 카드 등장
+  cardTimer -= dt;
+  if (cardTimer <= 0) {
+    spawnCard();
+    var min = Math.max(3.5, CARD_BASE_INTERVAL - wave * 0.15);
+    cardTimer = rand(min, min + 3);
+  }
+
+  // 랜덤 보스
+  bossTimer -= dt;
+  if (bossTimer <= 0 && phase === 'playing') {
+    spawnBoss();
+    bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
+  }
+
+  // 웨이브 진행
+  if (waveTimer <= 0) {
+    wave++;
+    waveTimer = WAVE_DURATION;
+    updateRecordsRealTime();
+    addPopups(W / 2, H * 0.25, '🌊 웨이브 ' + wave + '!', '#16A34A', 26);
+    updateHUD();
+  }
+}
+
+/* ═══════════════════════════════════════
+   UPDATE — main
+   ═══════════════════════════════════════ */
+function update(dt) {
+  updateSoldier(dt);
+  updateBullets(dt);
+  updateZombies(dt);
+  updateBosses(dt);
+  updateCards(dt);
+  updateParticles(dt);
+  updatePopups(dt);
+  updateWave(dt);
+}
+
+/* ═══════════════════════════════════════
+   RENDER — background (top-down battlefield)
+   하늘이 없고 전체가 땅이다. 멀리(상단)에서 가까이(하단)로.
+   좀비/아이템이 상단(먼 땅)에서 나와 하단(병사)으로 한 줄로 걸어 내려온다.
+   ═══════════════════════════════════════ */
+function renderBattlefield() {
+  // 강물 전체 (top-down): 위(멀리)=연한 물색, 아래(가까이)=짙은 물색
+  var g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#5FA8C9');
+  g.addColorStop(0.5, '#3E83B0');
+  g.addColorStop(1, '#2A5E88');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+
+  // 강물 출렁이는 물결 (시간 기반, 깜빡이지 않는 안정적 서머)
+  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+  ctx.lineWidth = 2;
+  for (var wv = 0; wv < 10; wv++) {
+    var wy = H * (0.06 + wv * 0.085);
+    ctx.beginPath();
+    for (var wx = 0; wx <= W; wx += 12) {
+      var wyy = wy + Math.sin(wx * 0.02 + gameTime * 0.8 + wv) * 3;
+      if (wx === 0) ctx.moveTo(wx, wyy); else ctx.lineTo(wx, wyy);
+    }
+    ctx.stroke();
+  }
+
+  // 멀리 강 언덕/지평선 (상단 가장자리 연한 안개)
+  var hg = ctx.createLinearGradient(0, 0, 0, H * 0.18);
+  hg.addColorStop(0, 'rgba(240,250,255,0.5)');
+  hg.addColorStop(1, 'rgba(240,250,255,0)');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0, 0, W, H * 0.18);
+
+  // 교량(다리) 상판 — 세로 한 줄(길), 상단(먼 곳, 좁게)에서 화면 하단(병사 지남)까지 쭉 이어짐
+  var laneTopY = 0;
+  var laneTopW = W * 0.42;
+  var laneBotY = H * 0.97;
+  var laneBotW = W * 0.9;
+  var cxp = W / 2;
+  // 다리 Deck
+  var bg = ctx.createLinearGradient(cxp - laneBotW / 2, 0, cxp + laneBotW / 2, 0);
+  bg.addColorStop(0, '#8A7A5A');
+  bg.addColorStop(0.5, '#B7A87F');
+  bg.addColorStop(1, '#8A7A5A');
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.moveTo(cxp - laneTopW / 2, laneTopY);
+  ctx.lineTo(cxp + laneTopW / 2, laneTopY);
+  ctx.lineTo(cxp + laneBotW / 2, laneBotY);
+  ctx.lineTo(cxp - laneBotW / 2, laneBotY);
+  ctx.closePath();
+  ctx.fill();
+
+  // 판자 가로선 (걸어 오는 리듬 원근)
+  ctx.strokeStyle = 'rgba(60,45,28,0.5)';
+  ctx.lineWidth = 2;
+  for (var i = 0; i < 10; i++) {
+    var t = i / 10;
+    var yy = laneTopY + Math.pow(t, 1.75) * (laneBotY - laneTopY);
+    var halfW = laneTopW / 2 + (laneBotW / 2 - laneTopW / 2) * Math.pow(t, 1.75);
+    ctx.beginPath();
+    ctx.moveTo(cxp - halfW, yy);
+    ctx.lineTo(cxp + halfW, yy);
+    ctx.stroke();
+  }
+
+  // 다리 난간 (양쪽 — 원근 사선)
+  ctx.strokeStyle = 'rgba(50,38,24,0.85)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cxp - laneTopW / 2 - 8, laneTopY);
+  ctx.lineTo(cxp - laneBotW / 2 - 14, laneBotY);
+  ctx.moveTo(cxp + laneTopW / 2 + 8, laneTopY);
+  ctx.lineTo(cxp + laneBotW / 2 + 14, laneBotY);
+  ctx.stroke();
+
+  // 난간 기둥 (가로 난간봉 — 넓어진 교량 느낌을 또렷하게)
+  ctx.strokeStyle = 'rgba(50,38,24,0.5)';
+  ctx.lineWidth = 1.5;
+  for (var rp = 0; rp < 5; rp++) {
+    var rt = 0.1 + rp * 0.2;
+    var ryy = laneTopY + Math.pow(rt, 1.75) * (laneBotY - laneTopY);
+    var rw = laneTopW / 2 + (laneBotW / 2 - laneTopW / 2) * Math.pow(rt, 1.75);
+    ctx.beginPath();
+    ctx.moveTo(cxp - rw - 8, ryy);
+    ctx.lineTo(cxp - rw + 6, ryy);
+    ctx.moveTo(cxp + rw - 6, ryy);
+    ctx.lineTo(cxp + rw + 8, ryy);
+    ctx.stroke();
+  }
+
+  // 교각(지지 기둥) — 좌우 아래쪽에, 원근 크기
+  for (var p = 0; p < 5; p++) {
+    var tp = 0.25 + p * 0.15;
+    var pwy = laneTopY + Math.pow(tp, 1.75) * (laneBotY - laneTopY);
+    var pw = laneTopW / 2 + (laneBotW / 2 - laneTopW / 2) * Math.pow(tp, 1.75);
+    var psz = 8 + Math.pow(tp, 1.75) * 22; // 원근 크기
+    // 물 속 교각 (다리 양옆 아래)
+    ctx.fillStyle = 'rgba(70,80,95,0.9)';
+    ctx.fillRect(cxp - pw - 10 * Math.max(1, psz / 12), pwy, 4 * Math.max(1, psz / 10), 18);
+    ctx.fillRect(cxp + pw - 4, pwy, 4 * Math.max(1, psz / 10), 18);
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER — soldier squad (원형 포메이션, 병사 수만큼)
+   ═══════════════════════════════════════ */
+function drawTrooper(mx, my, s, xyPhase, isCenter) {
+  var bobY = Math.sin(xyPhase) * 1.5;
+  var legX = isCenter ? 0 : (Math.sin(xyPhase) < 0 ? -1 : 1);
+
+  // 공통 외곽선: 모든 파츠에 얇은 검정 윤곽
+  ctx.strokeStyle = 'rgba(0,0,0,0.45)';
+  ctx.lineWidth = 1;
+  // 외곽선이 있는 사각형 파츠 헬퍼
+  function sr(x, y, w, h, c) {
+    ctx.fillStyle = c;
+    ctx.fillRect(x, y, w, h);
+    ctx.strokeRect(x, y, w, h);
+  }
+
+  // 그림자
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(mx, my + 16 * s, 17 * s, 5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 다리 (허벅지 + 종아리로 나눠 관절 각도)
+  sr(mx - 9 * s + legX * 2, my - 12 * s, 7 * s, 11 * s, '#5B4A2E');  // 왼 허벅지
+  sr(mx - 9 * s + legX * 3, my - 1 * s, 7 * s, 11 * s, '#4A3C26');   // 왼 종아리
+  sr(mx + 2 * s - legX * 2, my - 12 * s, 7 * s, 11 * s, '#5B4A2E');  // 오 허벅지
+  sr(mx + 1 * s - legX * 3, my - 1 * s, 7 * s, 11 * s, '#4A3C26');   // 오 종아리
+  // 군화
+  sr(mx - 10 * s + legX * 2, my + 6 * s, 9 * s, 4 * s, '#33302A');
+  sr(mx + 1 * s - legX * 2, my + 6 * s, 9 * s, 4 * s, '#33302A');
+
+  // 몸통 (군복 + 방탄조끼)
+  sr(mx - 12 * s, my - 40 * s + bobY, 24 * s, 30 * s, '#2E512F');
+  // 방탄조끼
+  sr(mx - 8 * s, my - 38 * s + bobY, 16 * s, 20 * s, '#4E6E37');
+  // 방탄조끼 세로 스트랩 3줄 + 포켓 2개
+  ctx.fillStyle = 'rgba(20,30,18,0.6)';
+  ctx.fillRect(mx - 6 * s, my - 37 * s + bobY, 2 * s, 18 * s);
+  ctx.fillRect(mx - 1 * s, my - 37 * s + bobY, 2 * s, 18 * s);
+  ctx.fillRect(mx + 4 * s, my - 37 * s + bobY, 2 * s, 18 * s);
+  sr(mx - 6 * s, my - 30 * s + bobY, 5 * s, 6 * s, 'rgba(40,55,25,0.9)');
+  sr(mx + 2 * s, my - 24 * s + bobY, 5 * s, 5 * s, 'rgba(40,55,25,0.9)');
+  // 벨트
+  sr(mx - 12 * s, my - 12 * s + bobY, 24 * s, 4 * s, '#4A3A22');
+
+  // 어깨 패드
+  sr(mx - 15 * s, my - 38 * s + bobY, 6 * s, 10 * s, '#1F3A2F');
+  sr(mx + 9 * s, my - 38 * s + bobY, 6 * s, 10 * s, '#1F3A2F');
+  // 어깨 패드와 몸통 겹침 그림자 (입체감)
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.fillRect(mx - 11 * s, my - 35 * s + bobY, 3 * s, 7 * s);
+  ctx.fillRect(mx + 8 * s, my - 35 * s + bobY, 3 * s, 7 * s);
+
+  // 머리 (살짝 타원 + 아래턱)
+  ctx.fillStyle = '#E8C29A';
+  ctx.beginPath();
+  ctx.ellipse(mx, my - 50 * s + bobY, 7.5 * s, 8.5 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // 헬멧 (카키) — 머리 위 반원 + 이음새 곡선 + 둥근 챙
+  ctx.fillStyle = '#6B7A2E';
+  ctx.beginPath();
+  ctx.arc(mx, my - 53 * s + bobY, 8.5 * s, Math.PI, 0);
+  ctx.quadraticCurveTo(mx + 8.5 * s, my - 50 * s + bobY, mx + 9.5 * s, my - 49 * s + bobY);
+  ctx.quadraticCurveTo(mx, my - 49 * s + bobY, mx - 9.5 * s, my - 49 * s + bobY);
+  ctx.quadraticCurveTo(mx - 8.5 * s, my - 50 * s + bobY, mx - 8.5 * s, my - 53 * s + bobY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 둥근 챙
+  ctx.fillStyle = '#5B6A27';
+  ctx.beginPath();
+  ctx.moveTo(mx - 9.5 * s, my - 48.5 * s + bobY);
+  ctx.quadraticCurveTo(mx, my - 46.5 * s + bobY, mx + 9.5 * s, my - 48.5 * s + bobY);
+  ctx.quadraticCurveTo(mx + 7.5 * s, my - 50 * s + bobY, mx - 7.5 * s, my - 50 * s + bobY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 헬멧 위 가죽끈/잎
+  sr(mx - 6 * s, my - 60 * s + bobY, 12 * s, 2 * s, '#3F4A1F');
+
+  // 총기 (위로 향해 살짝 기울임) — 소염기/개머리판/조준경 추가
+  var recoilX = soldier.recoil > 0 ? 1.5 : 0;
+  ctx.save();
+  ctx.translate(mx + 5 * s + recoilX, my - 36 * s + bobY);
+  ctx.rotate(-Math.PI / 2 - 0.08);   // 앞(좀비 쪽)을 향해 위로 겨누도록 90° 회전
+  // 총열
+  sr(0, -2.5 * s, 24 * s, 5 * s, '#3F3F46');
+  // 소염기 (총열 끝 2단 사각형)
+  sr(24 * s, -3 * s, 3 * s, 6 * s, '#2E2E33');
+  sr(27 * s, -3.5 * s, 2 * s, 7 * s, '#3F3F46');
+  // 개머리판 (뒤 사다리꼴)
+  ctx.fillStyle = '#27272A';
+  ctx.beginPath();
+  ctx.moveTo(-1 * s, -2.5 * s);
+  ctx.lineTo(-6 * s, -3.5 * s);
+  ctx.lineTo(-6 * s, 0.5 * s);
+  ctx.lineTo(-1 * s, 2.5 * s);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  // 손잡이
+  sr(-2 * s, -2 * s, 6 * s, 4 * s, '#27272A');
+  // 탄창
+  sr(13 * s, 0.5 * s, 4 * s, 6 * s, '#27272A');
+  // 조준경 (작은 원통 - 총열 위)
+  ctx.fillStyle = '#4B5563';
+  ctx.beginPath();
+  ctx.ellipse(12 * s, -4 * s, 4 * s, 2 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillRect(8 * s, -4 * s, 4 * s, 4 * s);
+  ctx.restore();
+}
+
+function renderSoldier() {
+  var positions = squadPositions(soldier.lives, soldier.x);
+  var m = 0.9;   // 병사 크기 배율 (모두 같은 크기, 작게)
+  var n = positions.length;
+
+  // 뒤쪽 병사부터 그려서 앞쪽이 위에 보이도록 (깊이감)
+  for (var i = n - 1; i >= 0; i--) {
+    var p = positions[i];
+    // 앞(+) 링의 병사일수록 크게, 뒤(-) 링일수록 약간 작게(깊이)
+    var s = m * (0.94 + 0.06 * clamp(p.yPart || 0, 0, 1));
+    drawTrooper(p.x, p.y, s, p.phase, i === 0);
+  }
+
+  // 발사선 가이드 (중앙 한 줄)
+  ctx.strokeStyle = 'rgba(37,99,235,0.12)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([4, 14]);
+  ctx.beginPath();
+  ctx.moveTo(soldier.x, soldierY() - 60);
+  ctx.lineTo(soldier.x, 14);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+/* ═══════════════════════════════════════
+   RENDER — bullets
+   ═══════════════════════════════════════ */
+function renderBullets() {
+  for (var i = 0; i < bullets.length; i++) {
+    var b = bullets[i];
+    // 원근: 총알이 위(멀리)로 갈수록 얇고 작게, 아래(가까움)로 갈수록 굵게
+    var bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
+    // 짧고 옅은 운동 꼬리 (마지막 3개 궤적 점만 — 길게 안 늘어짐)
+    var tr = b.trail;
+    if (tr.length >= 2) {
+      var start = Math.max(0, tr.length - 3);
+      ctx.strokeStyle = 'rgba(255,225,150,0.3)';
+      ctx.lineWidth = 2.4 * bs;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(tr[start].x, tr[start].y);
+      for (var t = start + 1; t < tr.length; t++) ctx.lineTo(tr[t].x, tr[t].y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+    }
+    // 도탄(타원형 총알) 본체: 위로 늘어진 길쭉한 발광 탄두
+    var rx = 3.4 * bs;     // 가로 반지름
+    var ry = 10 * bs;      // 세로 반지름 (이동 방향 = 위)
+    var g = ctx.createRadialGradient(b.x, b.y - ry * 0.4, 0, b.x, b.y, ry * 1.2);
+    g.addColorStop(0, '#FFFDF0');              // 밝은 중심
+    g.addColorStop(0.4, '#FFE566');
+    g.addColorStop(1, 'rgba(255,150,40,0)');   // 가장자리로 흐려짐
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    // 뾰족한 탄두(위) + 둥근 바닥(아래) — 도탄 실루엣
+    ctx.moveTo(b.x, b.y - ry);
+    ctx.bezierCurveTo(b.x + rx, b.y - ry * 0.2, b.x + rx, b.y + ry * 0.4, b.x, b.y + ry * 0.9);
+    ctx.bezierCurveTo(b.x - rx, b.y + ry * 0.4, b.x - rx, b.y - ry * 0.2, b.x, b.y - ry);
+    ctx.closePath();
+    ctx.fill();
+    // 밝은 코어
+    ctx.fillStyle = '#FFF8D0';
+    ctx.beginPath();
+    ctx.ellipse(b.x, b.y - ry * 0.15, rx * 0.5, ry * 0.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 뾰족한 앞머리 발광 포인트
+    ctx.fillStyle = 'rgba(255,255,255,0.95)';
+    ctx.beginPath();
+    ctx.arc(b.x, b.y - ry * 0.62, 1.8 * bs, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER — zombie
+   ═══════════════════════════════════════ */
+function drawZombieBody(z, cfg) {
+  var s = z.scale || scaleAt(z.y) || 0.7;
+  var x = z.x;
+  var y = z.y;
+  var ph = z.wobble;                      // 걷기 위상
+  var step = Math.sin(ph);                // -1..1
+  var bob = Math.max(0, Math.cos(ph)) * 1.5 * s;  // 걷는 리듬 상하 깡충
+
+  // 그림자
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 24 * s, 14 * s, 4 * s, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 다리 (걷기: 좌우 다리가 번갈아 앞뒤로 흔들림)
+  ctx.fillStyle = cfg.dark;
+  // 왼쪽 다리
+  ctx.fillRect(x - 8 * s - step * 3 * s, y - 2 * s, 7 * s, 24 * s);
+  // 오른쪽 다리 (반대 위상)
+  ctx.fillRect(x + 1 * s + step * 3 * s, y - 2 * s, 7 * s, 24 * s);
+  // 군화
+  ctx.fillStyle = '#222B22';
+  ctx.fillRect(x - 9 * s - step * 3 * s, y + 20 * s, 8 * s, 4 * s);
+  ctx.fillRect(x + 1 * s + step * 3 * s, y + 20 * s, 8 * s, 4 * s);
+
+  // 몸통 (걸을 때 살짝 상하로 깡충)
+  var g = ctx.createLinearGradient(x, y - 28 * s - bob, x, y - bob);
+  g.addColorStop(0, cfg.color);
+  g.addColorStop(1, cfg.dark);
+  ctx.fillStyle = g;
+  ctx.fillRect(x - 13 * s, y - 28 * s - bob, 26 * s, 28 * s);
+  // 찢어진 셔츠/옷갈피
+  ctx.fillStyle = cfg.dark;
+  ctx.fillRect(x - 13 * s, y - 20 * s - bob, 26 * s, 2 * s);
+
+  // 앞으로 뻗은 팔 (좀비 특유, 걷기 리듬에 맞춰 앞뒤로)
+  var armSwing = step * 3 * s;
+  ctx.fillStyle = cfg.color;
+  ctx.fillRect(x - 4 * s - 14 * s + armSwing, y - 26 * s + bob * 0.5, 6 * s, 22 * s);
+  ctx.fillRect(x - 2 * s + 8 * s - armSwing, y - 26 * s + bob * 0.5, 6 * s, 22 * s);
+  // 손 (앞으로)
+  ctx.fillStyle = cfg.dark;
+  ctx.fillRect(x - 4 * s - 15 * s + armSwing, y - 28 * s + bob * 0.5, 7 * s, 6 * s);
+  ctx.fillRect(x - 2 * s + 8 * s - armSwing, y - 28 * s + bob * 0.5, 7 * s, 6 * s);
+
+  // 머리 (좀비 초록, 비뚤 + 깡충)
+  ctx.fillStyle = cfg.color;
+  ctx.beginPath();
+  ctx.arc(x, y - 37 * s - bob, 10 * s, 0, Math.PI * 2);
+  ctx.fill();
+  // 눈 (빨갛게, 반짝)
+  ctx.fillStyle = '#FF4D4D';
+  ctx.beginPath();
+  ctx.arc(x - 4 * s, y - 39 * s - bob, 2 * s, 0, Math.PI * 2);
+  ctx.arc(x + 4 * s, y - 39 * s - bob, 2 * s, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function renderZombies() {
+  for (var i = 0; i < zombies.length; i++) {
+    var z = zombies[i];
+    if (z.dead) continue;
+    drawZombieBody(z, ZOMBIE_TYPES[z.type]);
+    // 체력바 (데미지 입은 경우)
+    if (z.hp < z.maxHp) {
+      var s = z.scale || 0.7;
+      var bw = 28 * s;
+      var bx = z.x - bw / 2;
+      var by = z.y - 50 * s;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.fillRect(bx, by, bw, 4);
+      ctx.fillStyle = '#4ADE80';
+      ctx.fillRect(bx, by, bw * (z.hp / z.maxHp), 4);
+    }
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER — boss
+   ═══════════════════════════════════════ */
+function renderBosses() {
+  for (var i = 0; i < bosses.length; i++) {
+    var bz = bosses[i];
+    var s = bz.w / 64;
+    var wob = Math.sin(bz.wobble) * 4 * s;
+
+    // 그림자
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.ellipse(bz.x, bz.y + 34 * s, 26 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 몸
+    var g = ctx.createLinearGradient(bz.x, bz.y - 50 * s, bz.x, bz.y);
+    g.addColorStop(0, '#3E7C3E');
+    g.addColorStop(1, '#14532D');
+    ctx.fillStyle = g;
+    ctx.fillRect(bz.x - 26 * s, bz.y - 40 * s, 52 * s, 44 * s);
+
+    // 혹/어깨
+    ctx.fillStyle = '#2F6B2F';
+    ctx.beginPath();
+    ctx.arc(bz.x - 24 * s, bz.y - 8 * s, 12 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x + 24 * s, bz.y - 8 * s, 12 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 팔
+    ctx.fillStyle = '#3E7C3E';
+    ctx.fillRect(bz.x - 34 * s, bz.y - 34 * s + wob * 0.5, 12 * s, 30 * s);
+    ctx.fillRect(bz.x + 22 * s, bz.y - 34 * s + wob * 0.5, 12 * s, 30 * s);
+
+    // 다리
+    ctx.fillStyle = '#14532D';
+    ctx.fillRect(bz.x - 16 * s, bz.y + 4 * s, 13 * s, 30 * s);
+    ctx.fillRect(bz.x + 3 * s, bz.y + 4 * s, 13 * s, 30 * s);
+
+    // 머리 (큰)
+    ctx.fillStyle = '#4ADE80';
+    ctx.beginPath();
+    ctx.arc(bz.x, bz.y - 52 * s + wob * 0.3, 18 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // 눈 (빨갛게)
+    ctx.fillStyle = '#DC2626';
+    ctx.beginPath();
+    ctx.arc(bz.x - 7 * s, bz.y - 54 * s, 4 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x + 7 * s, bz.y - 54 * s, 4 * s, 0, Math.PI * 2);
+    ctx.fill();
+    // 이빨
+    ctx.fillStyle = '#FEE2E2';
+    ctx.fillRect(bz.x - 8 * s, bz.y - 40 * s, 5 * s, 5 * s);
+    ctx.fillRect(bz.x + 3 * s, bz.y - 40 * s, 5 * s, 5 * s);
+
+    // 보스 체력바 (큰)
+    var bw = 70;
+    var bx = bz.x - bw / 2;
+    var by = bz.y - 78 * s;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.fillRect(bx - 1, by - 1, bw + 2, 9);
+    ctx.fillStyle = '#DC2626';
+    ctx.fillRect(bx, by, bw * (bz.hp / bz.maxHp), 7);
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(bz.name, bz.x, by - 3);
+  }
+}
+
+/* ═══════════════════════════════════════
+   RENDER — cards
+   ═══════════════════════════════════════ */
+function renderCards() {
+  for (var i = 0; i < cards.length; i++) {
+    var c = cards[i];
+    var s = (c.y > 10 ? scaleAt(c.y) : scaleAt(20)) * 0.9;
+    var w = 60 * s;
+    var h = 58 * s;
+    var x = c.x;
+    var y = c.y;
+
+    // 그림자
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + h * 0.6, w * 0.5, 5 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 반짝이는 카드 배경
+    var isMul = c.kind === 'mul';
+    var bg = isMul ? '#F59E0B' : '#2563EB';
+    var bgLight = isMul ? '#FDE68A' : '#93C5FD';
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(c.rot) * 0.12);
+    ctx.fillStyle = '#FFF';
+    // 카드 본체
+    var g = ctx.createLinearGradient(-w/2, -h/2, w/2, h/2);
+    g.addColorStop(0, bgLight);
+    g.addColorStop(1, bg);
+    ctx.fillStyle = g;
+    roundRect(-w/2, -h/2, w, h, 8 * s);
+    ctx.fill();
+    ctx.strokeStyle = isMul ? '#92400E' : '#1E3A8A';
+    ctx.lineWidth = 2;
+    roundRect(-w/2, -h/2, w, h, 8 * s);
+    ctx.stroke();
+
+    // 텍스트
+    ctx.fillStyle = '#FFF';
+    ctx.font = 'bold ' + (26 * s) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 4;
+    ctx.fillText((isMul ? '×' : '+') + c.value, 0, 0);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    ctx.textBaseline = 'alphabetic';
+
+    // 먹기 위해 필요한 총알 남은 수 — 카드 밑에 숫자로 표시 (진행 막대 포함)
+    if (c.maxHp > 1) {
+      var n = c.hp;
+      var m = c.maxHp;
+      var bw = 34 * Math.max(1, s);          // 진행 막대 폭
+      var bx = x - bw / 2;
+      var by = y + h * 0.66;
+      // 진행 막대 배경
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      roundRect(bx, by, bw, 6 * s, 3 * s);
+      ctx.fill();
+      // 잔여 타격수 진행 (많이 남을수록 붉게)
+      ctx.fillStyle = n > m * 0.5 ? 'rgba(255,90,90,0.95)' : 'rgba(255,190,60,0.95)';
+      roundRect(bx, by, Math.max(6 * s, bw * (n / m)), 6 * s, 3 * s);
+      ctx.fill();
+      // 남은 필요 타격수 숫자
+      ctx.font = 'bold ' + Math.round(11 * Math.max(1, s)) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FFF';
+      ctx.shadowColor = 'rgba(0,0,0,0.85)';
+      ctx.shadowBlur = 3;
+      ctx.fillText('🩸 ' + n, x, by - 3 * s);
+      ctx.shadowBlur = 0;
+    }
+
+    // 반짝임
+    var sparkle = 0.5 + 0.5 * Math.sin(gameTime * 8 + i);
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.3 + 0.4 * sparkle) + ')';
+    ctx.beginPath();
+    ctx.arc(x + w * 0.3, y - h * 0.3, 3 * s, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ═══════════════════════════════════════
+   RENDER — particles & popups
+   ═══════════════════════════════════════ */
+function renderParticles() {
+  for (var i = 0; i < particles.length; i++) {
+    var p = particles[i];
+    ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function renderPopups() {
+  for (var i = 0; i < popups.length; i++) {
+    var p = popups[i];
+    ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
+    ctx.fillStyle = p.color;
+    ctx.font = 'bold ' + p.size + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur = 3;
+    ctx.fillText(p.text, p.x, p.y);
+    ctx.shadowBlur = 0;
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ═══════════════════════════════════════
+   RENDER — main
+   ═══════════════════════════════════════ */
+function render() {
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, W, H);
+
+  renderBattlefield();
+
+  renderCards();
+  renderZombies();
+  renderBosses();
+  renderBullets();
+  renderSoldier();
+  renderParticles();
+  renderPopups();
+}
+
+/* ═══════════════════════════════════════
+   INPUT
+   ═══════════════════════════════════════ */
+var keys = { left: false, right: false };
+
+function updateHUD() {
+  hudWaveVal.textContent = wave;
+  hudLivesVal.textContent = soldier.lives;
+  hudScoreVal.textContent = formatNumber(score);
+}
+
+/* ═══════════════════════════════════════
+   LOOP
+   ═══════════════════════════════════════ */
+function loop(ts) {
+  if (!running) return;
+  var dt = (ts - lastTs) / 1000;
+  lastTs = ts;
+  if (dt < 0) dt = 0;
+  if (dt > 0.05) dt = 0.05;
+  update(dt);
+  render();
+  rafId = requestAnimationFrame(loop);
+}
+function startLoop() {
+  running = true;
+  lastTs = performance.now();
+  rafId = requestAnimationFrame(loop);
+}
+function stopLoop() {
+  running = false;
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+}
+
+/* ═══════════════════════════════════════
+   GAME START / END
+   ═══════════════════════════════════════ */
+function startGame() {
+  screenStart.classList.remove('show');
+  screenGame.classList.add('show');
+  modalGameOver.classList.remove('show');
+
+  W = 0; H = 0;
+  resizeCanvas();
+
+  soldier.x = W / 2;
+  soldier.lives = 3;
+  soldier.fireTimer = 0;
+  soldier.muteFlash = 0;
+  soldier.recoil = 0;
+
+  zombies.length = 0;
+  bosses.length = 0;
+  bullets.length = 0;
+  cards.length = 0;
+  particles.length = 0;
+  popups.length = 0;
+
+  wave = 1;
+  score = 0;
+  kills = 0;
+  waveTimer = WAVE_DURATION;
+  cardTimer = 3;
+  bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
+  gameTime = 0;
+
+  updateHUD();
+  phase = 'playing';
+  startLoop();
+}
+
+function endGame() {
+  if (phase !== 'playing') return;
+  phase = 'over';
+  stopLoop();
+  goWave.textContent = wave;
+  goKills.textContent = formatNumber(kills);
+  goScore.textContent = formatNumber(score);
+  var isNew = updateRecordsOnFinish();
+  goNewRecord.hidden = !isNew;
+  goMessage.textContent = soldier.lives <= 0 ? '부대가 모두 전멸했어요...' : '전쟁이 끝났어요.';
+  setTimeout(function() {
+    modalGameOver.classList.add('show');
+  }, 400);
+}
+
+function backHome() {
+  stopLoop();
+  phase = 'idle';
+  screenGame.classList.remove('show');
+  modalGameOver.classList.remove('show');
+  modalHelp.classList.remove('show');
+  screenStart.classList.add('show');
+  renderStartRecords();
+}
+
+/* ═══════════════════════════════════════
+   AUDIO (간단한 진동/사운드)
+   ═══════════════════════════════════════ */
+function audioHit() {
+  if (navigator.vibrate) { try { navigator.vibrate(80); } catch (e) {} }
+}
+
+/* ═══════════════════════════════════════
+   POINTER / TOUCH — 좌우 이동
+   ═══════════════════════════════════════ */
+var touchActive = false;
+var touchLastX = 0;
+
+gameCanvas.addEventListener('touchstart', function(e) {
+  if (phase !== 'playing') return;
+  e.preventDefault();
+  var t = e.changedTouches[0];
+  touchActive = true;
+  touchLastX = t.clientX;
+}, { passive: false });
+
+gameCanvas.addEventListener('touchmove', function(e) {
+  if (phase !== 'playing' || !touchActive) return;
+  e.preventDefault();
+  var t = e.changedTouches[0];
+  var rect = gameCanvas.getBoundingClientRect();
+  var dx = (t.clientX - touchLastX) * (W / rect.width);
+  soldier.x += dx;
+  touchLastX = t.clientX;
+}, { passive: false });
+
+gameCanvas.addEventListener('touchend', function(e) {
+  touchActive = false;
+}, { passive: true });
+gameCanvas.addEventListener('touchcancel', function() { touchActive = false; }, { passive: true });
+
+// 마우스 드래그
+var mouseActive = false;
+gameCanvas.addEventListener('mousedown', function(e) {
+  if (phase !== 'playing') return;
+  mouseActive = true;
+});
+window.addEventListener('mousemove', function(e) {
+  if (!mouseActive || phase !== 'playing') return;
+  var rect = gameCanvas.getBoundingClientRect();
+  var gameX = (e.clientX - rect.left) * (W / rect.width);
+  soldier.x = clamp(gameX, soldier.w / 2, W - soldier.w / 2);
+});
+window.addEventListener('mouseup', function() { mouseActive = false; });
+
+// 키보드
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { keys.left = true; e.preventDefault(); }
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { keys.right = true; e.preventDefault(); }
+});
+document.addEventListener('keyup', function(e) {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+});
+
+/* ═══════════════════════════════════════
+   BIND EVENTS
+   ═══════════════════════════════════════ */
+btnStart.addEventListener('click', function() { startGame(); });
+btnGoRetry.addEventListener('click', function() { modalGameOver.classList.remove('show'); startGame(); });
+btnGoHome.addEventListener('click', function() { backHome(); });
+btnHelp.addEventListener('click', function() { modalHelp.classList.add('show'); });
+btnHelpClose.addEventListener('click', function() { modalHelp.classList.remove('show'); });
+modalHelp.addEventListener('click', function(e) { if (e.target === modalHelp) modalHelp.classList.remove('show'); });
+btnBackHome.addEventListener('click', function() { backHome(); });
+
+portalBtns.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    window.location.href = PORTAL_URL;
+  });
+});
+
+window.addEventListener('resize', function() {
+  resizeCanvas();
+});
+window.addEventListener('orientationchange', function() {
+  setTimeout(resizeCanvas, 200);
+});
+
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden' && phase === 'playing') {
+    updateRecordsRealTime();
+  }
+});
+
+/* ═══════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════ */
+renderStartRecords();
+
+})();
+</script>
+</body>
+</html>
