@@ -715,11 +715,12 @@ function spawnCard() {
 }
 
 function spawnBoss() {
-  // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장
+  // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장.
+  // 스폰 위치는 지평선(대교) 중앙 — 유저(병사) 위치와 무관하게 고정
   var w = 64 + Math.min(40, wave * 3);
   var hp = 150 + Math.floor(wave * 40) + Math.floor(wave * wave * 6);
   bosses.push({
-    x: soldier.x,                // 길 한가운데로 걸어 나옴
+    x: W / 2 + rand(-W * 0.08, W * 0.08),   // 대교 중앙 부근, 유저 기준 아님
     y: horizonY(),
     baseSpeed: 38 + Math.min(26, wave * 2),
     w: w,
@@ -1404,62 +1405,76 @@ function renderBosses() {
   for (var i = 0; i < bosses.length; i++) {
     var bz = bosses[i];
     var s = bz.w / 64;
-    var wob = Math.sin(bz.wobble) * 4 * s;
+    var ph = bz.wobble;
+    var sq = Math.sin(ph);                    // 움찔 위상
+    var squash = 1 + sq * 0.12;               // 수직 찌그러짐
+    var stretch = 1 - sq * 0.09;              // 수평 찌그러짐(반대)
+    var bottom = bz.y + 6 * s;                // 대형 슬라임 바닥
+    var bw = 30 * s * stretch;                // 몸통 반폭 (넓고 웅장)
+    var bh = 30 * s * squash;                 // 몸통 반높이
 
     // 그림자
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath();
-    ctx.ellipse(bz.x, bz.y + 34 * s, 26 * s, 8 * s, 0, 0, Math.PI * 2);
+    ctx.ellipse(bz.x, bottom + 5 * s, bw + 5 * s, 7 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 몸
-    var g = ctx.createLinearGradient(bz.x, bz.y - 50 * s, bz.x, bz.y);
-    g.addColorStop(0, '#3E7C3E');
+    // 몸: 큰 젤리 돔
+    var g = ctx.createLinearGradient(bz.x, bottom - bh * 2, bz.x, bottom);
+    g.addColorStop(0, '#4ADE80');
     g.addColorStop(1, '#14532D');
     ctx.fillStyle = g;
-    ctx.fillRect(bz.x - 26 * s, bz.y - 40 * s, 52 * s, 44 * s);
-
-    // 혹/어깨
-    ctx.fillStyle = '#2F6B2F';
     ctx.beginPath();
-    ctx.arc(bz.x - 24 * s, bz.y - 8 * s, 12 * s, 0, Math.PI * 2);
-    ctx.arc(bz.x + 24 * s, bz.y - 8 * s, 12 * s, 0, Math.PI * 2);
+    ctx.moveTo(bz.x - bw, bottom);
+    ctx.bezierCurveTo(bz.x - bw, bottom - bh, bz.x - bw * 0.7, bottom - bh * 1.8, bz.x, bottom - bh * 2);
+    ctx.bezierCurveTo(bz.x + bw * 0.7, bottom - bh * 1.8, bz.x + bw, bottom - bh, bz.x + bw, bottom);
+    ctx.quadraticCurveTo(bz.x, bottom + 4 * s, bz.x - bw, bottom);
+    ctx.closePath();
     ctx.fill();
 
-    // 팔
-    ctx.fillStyle = '#3E7C3E';
-    ctx.fillRect(bz.x - 34 * s, bz.y - 34 * s + wob * 0.5, 12 * s, 30 * s);
-    ctx.fillRect(bz.x + 22 * s, bz.y - 34 * s + wob * 0.5, 12 * s, 30 * s);
-
-    // 다리
-    ctx.fillStyle = '#14532D';
-    ctx.fillRect(bz.x - 16 * s, bz.y + 4 * s, 13 * s, 30 * s);
-    ctx.fillRect(bz.x + 3 * s, bz.y + 4 * s, 13 * s, 30 * s);
-
-    // 머리 (큰)
-    ctx.fillStyle = '#4ADE80';
+    // 윤기(젤리 광택)
+    ctx.fillStyle = 'rgba(255,255,255,0.30)';
     ctx.beginPath();
-    ctx.arc(bz.x, bz.y - 52 * s + wob * 0.3, 18 * s, 0, Math.PI * 2);
+    ctx.ellipse(bz.x - bw * 0.4, bottom - bh * 1.55, bw * 0.22, bh * 0.14, -0.35, 0, Math.PI * 2);
     ctx.fill();
-    // 눈 (빨갛게)
+
+    // 눈: 큰 흰자 + 붉은 눈동자 (보스 포스)
+    var ey = bottom - bh * 1.1 + sq * 3 * s;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(bz.x - 12 * s, ey, 8 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x + 12 * s, ey, 8 * s, 0, Math.PI * 2);
+    ctx.fill();
     ctx.fillStyle = '#DC2626';
     ctx.beginPath();
-    ctx.arc(bz.x - 7 * s, bz.y - 54 * s, 4 * s, 0, Math.PI * 2);
-    ctx.arc(bz.x + 7 * s, bz.y - 54 * s, 4 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x - 11 * s, ey + 1 * s, 4 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x + 13 * s, ey + 1 * s, 4 * s, 0, Math.PI * 2);
     ctx.fill();
-    // 이빨
-    ctx.fillStyle = '#FEE2E2';
-    ctx.fillRect(bz.x - 8 * s, bz.y - 40 * s, 5 * s, 5 * s);
-    ctx.fillRect(bz.x + 3 * s, bz.y - 40 * s, 5 * s, 5 * s);
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(bz.x - 12 * s, ey - 1.5 * s, 1.6 * s, 0, Math.PI * 2);
+    ctx.arc(bz.x + 12 * s, ey - 1.5 * s, 1.6 * s, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 성난 눈썹 (보스 느낌)
+    ctx.strokeStyle = '#14532D';
+    ctx.lineWidth = 3 * s;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(bz.x - 19 * s, ey - 9 * s);
+    ctx.lineTo(bz.x - 6 * s, ey - 5 * s);
+    ctx.moveTo(bz.x + 19 * s, ey - 9 * s);
+    ctx.lineTo(bz.x + 6 * s, ey - 5 * s);
+    ctx.stroke();
 
     // 보스 체력바 (큰)
-    var bw = 70;
-    var bx = bz.x - bw / 2;
-    var by = bz.y - 78 * s;
+    var hpw = 70;
+    var bx = bz.x - hpw / 2;
+    var by = bz.y - 82 * s;
     ctx.fillStyle = 'rgba(0,0,0,0.5)';
-    ctx.fillRect(bx - 1, by - 1, bw + 2, 9);
+    ctx.fillRect(bx - 1, by - 1, hpw + 2, 9);
     ctx.fillStyle = '#DC2626';
-    ctx.fillRect(bx, by, bw * (bz.hp / bz.maxHp), 7);
+    ctx.fillRect(bx, by, hpw * (bz.hp / bz.maxHp), 7);
     ctx.fillStyle = '#FFF';
     ctx.font = 'bold 9px sans-serif';
     ctx.textAlign = 'center';
