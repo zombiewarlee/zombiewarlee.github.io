@@ -614,9 +614,12 @@ function maxBullets() { return MAX_BULLETS_BASE + soldier.lives * BULLETS_PER_ME
 function spawnBullet(x, y) {
   if (bullets.length >= maxBullets()) return;
   var power = bulletDamage(soldier.lives);
+  // 원근감: 스크린 정중앙(W/2)에서 벗어날수록 안쪽(중앙)으로 살짝 기울여 발사 — 정중앙에서는 수직
+  var vx = (W / 2 - x) * 0.10;
   bullets.push({
     x: x,
     y: y,
+    vx: vx,
     vy: -BULLET_SPEED,
     power: power,
     trail: []
@@ -688,8 +691,7 @@ function spawnCard() {
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 더 많이 맞춰야 함 — 높게 책정
   var hp = Math.max(12, Math.round(value * 2.6));
   cards.push({
-    x: soldier.x + rand(-44, 44),  // 넓게 흩뿌림 (초반 병사 1명 보상용)
-    y: horizonY(),
+    x: W / 2 + rand(-W * 0.21, W * 0.21),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
     y: horizonY(),
     baseSpeed: 62,
     kind: kind,
@@ -741,6 +743,7 @@ function updateSoldier(dt) {
 function updateBullets(dt) {
   for (var i = bullets.length - 1; i >= 0; i--) {
     var b = bullets[i];
+    b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.vy = -BULLET_SPEED;
 
