@@ -507,7 +507,6 @@ var bossSpawned = false;   // 이번 웨이브 보스 소환 시작 여부 (웨�
 var bossQueue = 0;         // 아직 등장하지 않은 보스 수 — 한 마리씩 랜덤 타이밍으로 등장
 var bossQueueTimer = 0;    // 다음 보스 등장까지 남은 시간(초)
 var autosaveTimer = 0;     // 진행 상태 자동 저장 주기 타이머 (이어하기용)
-var lastGoldWave = 0;      // 마지막 황금 ×2 카드가 나온 웨이브 — 2웨이브 내 1개 보장용
 
 /* ═══════════════════════════════════════
    RECORDS (localStorage)
@@ -812,11 +811,9 @@ function spawnCard() {
   var kind = 'add';
   var value;
   // 낮은 확률(10%)로 황금 ×2 카드 — 맞히면 병사가 2배로 (필요 타격수는 대폭)
-  // 단, 지난 2웨이브 안에 황금이 안 나왔으면 이번엔 무조건 황금 (적어도 2웨이브당 1개 보장)
-  if (r < 0.10 || wave - lastGoldWave >= 2) {
+  if (r < 0.10) {
     kind = 'mul';
     value = 2;
-    lastGoldWave = wave;
   } else {
     // 덧셈(+) 카드: 웨이브와 무관하게 +1 ~ +10 균등 확률 (유니폼 샘플링)
     value = randInt(1, 10);
