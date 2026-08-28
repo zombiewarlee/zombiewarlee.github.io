@@ -738,8 +738,8 @@ function fireSquad() {
 }
 
 function getHpForWave() {
-  // 웨이브에 맞게 증가하되 출발을 낮게: 1웨이브엔 적게, 고웨이브로 갈수록 증가
-  return 4 + Math.floor(wave * 2.5);
+  // 웨이브에 맞게 완만하게 증가 (기존 4+wave×2.5에서 대폭 완화)
+  return 2 + Math.floor(wave * 1.2);
 }
 
 function pickZombieType() {
