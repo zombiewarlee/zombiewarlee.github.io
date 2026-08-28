@@ -360,10 +360,10 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
         <p><b>🟢 좀비:</b> 기본 몬스터</p>
         <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
         <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
-        <p><b>🧱 방패 좀비:</b> 처음 12발은 무효! 방패가 깨진 뒤엔 약해요 (쇳빛)</p>
+        <p><b>🧱 방패 좀비:</b> 방패가 아주 단단해요! 120발을 막아낸 뒤에야 약해져요 (쇳빛)</p>
         <p><b>🫧 분열 좀비:</b> 죽으면 작은 좀비 2마리로 쪼개져요 (민트색, 5웨이브부터)</p>
         <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황)</p>
-        <p><b>👹 좀비 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터는 <b>속도·탱크 보스</b>도 섞여 등장!</p>
+        <p><b>👹 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터 <b>속도·탱크</b>, 6웨이브부터 <b>방패·원거리</b>, 7웨이브부터 <b>분열 보스</b>까지 섞여 등장! 분열 보스는 죽으면 작은 좀비를 쏟아내요.</p>
       </div>
       <div class="help-section">
         <h3>🪖 목숨 (군인)</h3>
@@ -426,17 +426,20 @@ var ZOMBIE_TYPES = {
   normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },  // 초록
   fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#e0483f', dark: '#8f2a24', dmg: 1 },  // 붉은색(빠름)
   tank:   { hp: 85, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 },  // 보라
-  shield: { hp: 22, speed: 34,  w: 30, score: 0,  color: '#64748B', dark: '#334155', dmg: 1, shield: 12 },  // 쇳빛 — 첫 12발 무효(깨짐)
+  shield: { hp: 22, speed: 34,  w: 30, score: 0,  color: '#64748B', dark: '#334155', dmg: 1, shield: 120 }, // 쇳빛 — 첫 120발 무효(깨짐)
   split:  { hp: 36, speed: 42,  w: 30, score: 0,  color: '#14B8A6', dark: '#0F766E', dmg: 1, splits: 2 },   // 민트 — 죽으면 2마리로 분열
   mini:   { hp: 10, speed: 48,  w: 18, score: 0,  color: '#5EEAD4', dark: '#0F766E', dmg: 1 },   // 분열로 나오는 작은 좀비
   ranged: { hp: 16, speed: 36,  w: 26, score: 0,  color: '#F97316', dark: '#9A3412', dmg: 1, shoots: true } // 주황 — 총알 발사
 };
 
-// 보스 종류별 배율/색상 — 5웨이브부터 섞여 등장 (일반=초록, 빠른=붉은, 탱크=보라)
+// 보스 종류별 배율/색상 — 5웨이브부터 섞여 등장 (일반=초록, 빠른=붉은, 탱크=보라, 방패=쇳빛, 분열=민트, 원거리=주황)
 var BOSS_TYPES = {
   normal: { wMul: 1.0,  hpMul: 1.0, spdMul: 1.0,  color: '#4ADE80', dark: '#14532D', name: '좀비 보스' },
   fast:   { wMul: 0.78, hpMul: 0.55, spdMul: 2.1,  color: '#e0483f', dark: '#8f2a24', name: '속도 보스' },
-  tank:   { wMul: 1.28, hpMul: 1.8,  spdMul: 0.65, color: '#8e5bbf', dark: '#5b3a80', name: '탱크 보스' }
+  tank:   { wMul: 1.28, hpMul: 1.8,  spdMul: 0.65, color: '#8e5bbf', dark: '#5b3a80', name: '탱크 보스' },
+  shield: { wMul: 1.15, hpMul: 1.5,  spdMul: 0.55, color: '#94A3B8', dark: '#334155', name: '방패 보스', shield: 300 },
+  split:  { wMul: 0.95, hpMul: 0.85, spdMul: 1.05, color: '#14B8A6', dark: '#0F766E', name: '분열 보스', splits: 12 },
+  ranged: { wMul: 0.9,  hpMul: 0.7,  spdMul: 0.9,  color: '#F97316', dark: '#9A3412', name: '원거리 보스', shoots: true }
 };
 
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
@@ -841,11 +844,21 @@ function spawnCard() {
 }
 
 function pickBossType() {
-  // 5웨이브부터 빠른·탱크 보스가 섞여 등장 (그 전엔 일반 보스만)
+  // 5웨이브부터 빠른·탱크 보스, 6웨이브부터 방패·원거리 보스, 7웨이브부터 분열 보스가 섞여 등장 (그 전엔 일반 보스만)
   if (wave < 5) return 'normal';
   var r = Math.random();
-  if (r < 0.3) return 'fast';
-  if (r < 0.55) return 'tank';
+  var shieldG = wave >= 6 ? 0.16 : 0;
+  var rangedG = wave >= 6 ? 0.14 : 0;
+  var splitG = wave >= 7 ? 0.15 : 0;
+  if (r < 0.30) return 'fast';
+  r -= 0.30;
+  if (r < 0.25) return 'tank';
+  r -= 0.25;
+  if (r < shieldG) return 'shield';
+  r -= shieldG;
+  if (r < rangedG) return 'ranged';
+  r -= rangedG;
+  if (r < splitG) return 'split';
   return 'normal';
 }
 
@@ -867,6 +880,9 @@ function spawnBoss(spreadX) {
     w: baseW * cfg.wMul,
     hp: baseHp * cfg.hpMul,
     maxHp: baseHp * cfg.hpMul,
+    shield: cfg.shield || 0,       // 방패 보스: 막기 횟수 (깨지면 0)
+    fireTimer: 2.0,                // 원거리 보스: 첫 발사까지 대기
+    charging: 0,                   // 원거리 보스: 조준 차징 잔여 시간
     wobble: 0,
     wobbleSpeed: type === 'fast' ? 3.4 : 2.2,
     type: type,
@@ -977,10 +993,19 @@ function hitBosses(b) {
     var hw = bz.w * 0.6 + 6;
     var hh = bz.w * 0.55 + 6;
     if (Math.abs(bz.x - b.x) < hw && Math.abs(bcy - b.y) < hh) {
-      bz.hp -= b.power;
-      addParticles(b.x, bcy, '#F9A8D4', 8, 150, 0.4);
-      if (bz.hp <= 0) {
-        killBoss(bi, bz);
+      // 방패 보스: 남은 막기 횟수가 있으면 피해 대신 방패가 막아줌 (깨지면 무효)
+      if (bz.shield > 0) {
+        bz.shield--;
+        addParticles(b.x, bcy, '#E2E8F0', 10, 180, 0.4);
+        if (bz.shield <= 0) {
+          addPopups(bz.x, bz.y - 16, '🧱 보스 방패 파괴!', '#94A3B8', 16);
+        }
+      } else {
+        bz.hp -= b.power;
+        addParticles(b.x, bcy, '#F9A8D4', 8, 150, 0.4);
+        if (bz.hp <= 0) {
+          killBoss(bi, bz);
+        }
       }
       hit = true;
       break;
@@ -1030,6 +1055,31 @@ function killBoss(bi, bz) {
   addParticles(bz.x, bz.y, '#FBBF24', 40, 260, 0.9);
   addParticles(bz.x, bz.y, '#F97316', 30, 200, 0.8);
   addPopups(bz.x, bz.y - 10, '+보너스!', '#F59E0B', 22);
+  // 분열 보스: 죽으면 작은 좀비 12마리로 쏟아져 나옴 (각각 처치수 카운트)
+  if (BOSS_TYPES[bz.type].splits) {
+    var miniCfg = ZOMBIE_TYPES.mini;
+    var spN = BOSS_TYPES[bz.type].splits;
+    addPopups(bz.x, bz.y - 46, '🫧 분열!', '#14B8A6', 20);
+    for (var si = 0; si < spN; si++) {
+      zombies.push({
+        x: bz.x + rand(-30, 30),
+        y: bz.y,
+        baseSpeed: miniCfg.speed,
+        type: 'mini',
+        w: miniCfg.w,
+        hp: miniCfg.hp,
+        maxHp: miniCfg.hp,
+        scale: scaleAt(bz.y),
+        wobble: si * Math.PI / 2,
+        wobbleSpeed: rand(4, 7),
+        id: zombieId++,
+        dead: false,
+        shield: 0,
+        fireTimer: 99,
+        charging: 0
+      });
+    }
+  }
   updateHUD();
 }
 
@@ -1080,13 +1130,15 @@ function updateZombies(dt) {
 }
 
 // 원거리 좀비: 발사 순간 병사 위치를 조준하되 살짝 빗나갈 여지를 둠 (좌우로 피하면 회피 가능)
-function fireEnemyShot(z) {
+function fireEnemyShot(z, dmg, spread, spd) {
   var s = z.scale || 1;
   var shootY = z.y + 14 * s;
   var dy = soldierY() - shootY;
   if (dy <= 0) return;                     // 이미 방어선을 지났으면 발사 안 함
-  var spd = 200;
-  var aimX = soldier.x + rand(-36, 36);    // 조준점 오차 — 완벽 추적 방지
+  spd = spd || 200;
+  dmg = dmg || 1;
+  spread = spread || 36;
+  var aimX = soldier.x + rand(-spread, spread);   // 조준점 오차 — 완벽 추적 방지
   var t = dy / spd;
   var vx = clamp((aimX - z.x) / t, -160, 160);
   enemyFire.push({
@@ -1094,7 +1146,7 @@ function fireEnemyShot(z) {
     y: shootY,
     vx: vx,
     vy: spd,
-    dmg: 1,
+    dmg: dmg,
     spin: rand(0, Math.PI * 2)
   });
   addParticles(z.x, shootY, '#F97316', 6, 130, 0.3);
@@ -1125,6 +1177,22 @@ function updateBosses(dt) {
     var bz = bosses[i];
     bz.y += bz.baseSpeed * scaleAt(bz.y) * speedFactor() * dt;
     bz.wobble += bz.wobbleSpeed * dt * scaleAt(bz.y);
+
+    // 원거리 보스: 조준 차징 후 강한 총알(2피해, 더 넓은 오차) 발사
+    if (BOSS_TYPES[bz.type].shoots) {
+      if (bz.charging > 0) {
+        bz.charging -= dt;
+        if (bz.charging <= 0) {
+          bz.charging = 0;
+          fireEnemyShot(bz, 2, 44, 220);
+          bz.fireTimer = rand(2.6, 3.6);
+        }
+      } else {
+        bz.fireTimer -= dt;
+        if (bz.fireTimer <= 0) bz.charging = ENEMY_CHARGE;
+      }
+    }
+
     if (bz.y >= hitLine) {
       soldierHit(4);
       addParticles(bz.x, hitLine, '#7C2D12', 20, 200, 0.8);
@@ -1769,6 +1837,33 @@ function renderBosses() {
     ctx.moveTo(bz.x + 19 * s, ey - 9 * s);
     ctx.lineTo(bz.x + 6 * s, ey - 5 * s);
     ctx.stroke();
+
+    // 방패 보스: 남은 막기 횟수 배지 (깨지면 사라짐)
+    if (bz.shield > 0) {
+      ctx.fillStyle = '#CBD5E1';
+      ctx.beginPath();
+      ctx.arc(bz.x, bz.y - 40 * s, 11 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold ' + Math.round(13 * s) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(bz.shield), bz.x, bz.y - 36 * s);
+      ctx.textAlign = 'left';
+    }
+    // 원거리 보스: 조준 차징 중이면 커지는 ❗ 경고
+    if (bz.charging > 0) {
+      var pulse2 = 1 + Math.sin(gameTime * 20) * 0.12;
+      var prog2 = bz.charging / ENEMY_CHARGE;
+      var size2 = (18 + 30 * (1 - prog2)) * pulse2;
+      ctx.font = 'bold ' + Math.round(size2) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FDE68A';
+      ctx.shadowColor = 'rgba(253,230,138,0.9)';
+      ctx.shadowBlur = 10;
+      ctx.fillText('❗', bz.x, bz.y - (30 + 26 * (1 - prog2)));
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
+    }
 
     // 보스 체력바 (큰)
     var hpw = 70;
