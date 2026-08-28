@@ -714,7 +714,7 @@ function maxBullets() { return MAX_BULLETS_BASE + soldier.lives * BULLETS_PER_ME
 // 병사 1명이 자기 위치에서 직선(위)으로 총알을 발사한다
 function spawnBullet(x, y) {
   if (bullets.length >= maxBullets()) return;
-  var power = bulletDamage(soldier.lives);
+  var power = 1;   // 총알 데미지는 항상 1 — 화력은 병사 수(발사 빈도)로만 성장
   // 원근감: 스크린 정중앙(W/2)에서 벗어날수록 안쪽(중앙)으로 살짝 기울여 발사 — 정중앙에서는 수직
   var vx = (W / 2 - x) * 0.10;
   bullets.push({
@@ -726,10 +726,6 @@ function spawnBullet(x, y) {
     trail: []
   });
 }
-function bulletDamage(lives) {
-  return 1 + Math.floor(lives / 6);
-}
-
 // 부대 전체 발사: 병사 수만큼의 총알이 동시에 직선으로 나감
 function fireSquad() {
   var positions = squadPositions(soldier.lives, soldier.x);
@@ -816,10 +812,9 @@ function spawnCard() {
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 + 웨이브² 가중치(제곱)로 더 많이 맞춰야 함
   var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * wave * 1.5));
   if (kind === 'mul') hp = Math.round(hp * 3);   // ×2 카드: 필요 타격수 3배 (황금 보상은 각오 필요)
-  // 현재 병사수 가중치 — 병사가 많아질수록 화력(초당 발사량)이 세지므로 필요 타격수도 비례해 상향
-  // (병사 10명 기준, 10명 이하는 기존 난이도 그대로)
-  // 100명 초과부터는 병사수 제곱 비례로 급증 — 100명에서 연속(×10 = 100²/1000)
-  var wLives = soldier.lives <= 100 ? Math.max(1, soldier.lives / 10) : soldier.lives * soldier.lives / 1000;
+  // 현재 병사수 가중치 — 총알 데미지가 고정(1)이므로 화력은 병사 수에 정비례
+  // 필요 타격수도 병사 수에 정비례(정배)로 상향 (병사 10명 기준, 그 이하는 기존 난이도 그대로)
+  var wLives = Math.max(1, soldier.lives / 10);
   hp = Math.round(hp * wLives);
   cards.push({
     x: W / 2 + rand(-W * 0.35, W * 0.35),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
