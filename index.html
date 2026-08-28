@@ -719,8 +719,8 @@ function spawnCard() {
     if (r < 0.30) value = randInt(4, 5);   // 고웨이브: 가끔 +4~+5
     else value = randInt(1, 4);            // 주로 +1~+4
   }
-  // 먹으려면 필요한 총알 수(HP): 보상이 클수록 + 웨이브가 높을수록 더 많이 맞춰야 함
-  var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * 1.5));
+  // 먹으려면 필요한 총알 수(HP): 보상이 클수록 + 웨이브² 가중치(제곱)로 더 많이 맞춰야 함
+  var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * wave * 1.5));
   cards.push({
     x: W / 2 + rand(-W * 0.35, W * 0.35),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
     y: horizonY(),
