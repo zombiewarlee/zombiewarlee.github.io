@@ -687,6 +687,9 @@ function resizeCanvas() {
    PARTICLES / POPUPS
    ═══════════════════════════════════════ */
 function addParticles(x, y, color, count, speed, life) {
+  // 대부대 히트 스파크 폭주 방지: 파티클이 거의 찬 상태에서 소형 효과(6개↓)는 일부만 생성
+  // (12k발/s 히트 → 48k 파티클/s 폭주 방지, 죽음·카드 파괴 같은 큰 효과(8개+)는 항상 생성)
+  if (count <= 6 && particles.length > MAX_PARTICLES - 120 && Math.random() < 0.85) return;
   for (var i = 0; i < count; i++) {
     if (particles.length >= MAX_PARTICLES) particles.shift();
     var a = Math.random() * Math.PI * 2;
@@ -703,6 +706,8 @@ function addParticles(x, y, color, count, speed, life) {
   }
 }
 function addPopups(x, y, text, color, size) {
+  // 팝업 폭주 방지: 동시 표시 24개 초과 시 새 팝업 억제 (처치·분열·방패파괴 등)
+  if (popups.length >= 24) return;
   popups.push({ x: x, y: y, text: text, color: color, size: size || 16, life: 1.0, maxLife: 1.0 });
 }
 
@@ -905,25 +910,56 @@ function updateSoldier(dt) {
 }
 
 function updateBullets(dt) {
+  // 전선 y-게이트: 모든 적(좀비·보스·카드) 히트박스 상단 중 가장 위(y값 최소)를 계산.
+  // 이보다 높이 올라간 총알은 어떤 적과도 겹칠 수 없음 → 충돌 루프 전체 스킵 (빈 하늘 비용 0)
+  var gateY = Infinity;
+  for (var zi = 0; zi < zombies.length; zi++) {
+    var zz = zombies[zi];
+    if (zz.dead) continue;
+    var zs = scaleAt(zz.y) || 0.7;
+    var gt = zz.y - 16 * zs - (zz.w * 0.9 * zs + 4) - 2;
+    if (gt < gateY) gateY = gt;
+  }
+  for (var bi = 0; bi < bosses.length; bi++) {
+    var bz = bosses[bi];
+    var bs = scaleAt(bz.y) || 0.7;
+    var gb = bz.y - 24 * bs - (bz.w * 0.55 + 6) - 2;
+    if (gb < gateY) gateY = gb;
+  }
+  for (var ci = 0; ci < cards.length; ci++) {
+    var cc = cards[ci];
+    var cs = scaleAt(cc.y) || 0.6;
+    var gc = cc.y - (90 * cs) / 2 - 8 - 2;
+    if (gc < gateY) gateY = gc;
+  }
+
   for (var i = bullets.length - 1; i >= 0; i--) {
     var b = bullets[i];
     b.x += b.vx * dt;
     b.y += b.vy * dt;
-    b.vy = -BULLET_SPEED;
+
+    // 모든 적보다 위: 충돌 불가 구간 → 제거 여부만 처리하고 루프 생략
+    if (b.y < gateY) {
+      if (b.y < -60) {
+        bullets[i] = bullets[bullets.length - 1];
+        bullets.pop();
+      }
+      continue;
+    }
 
     var hitSomething = false;
     // 카드 충돌 — 필요한 총알 수(HP)만큼 모두 맞춰야 먹을 수 있음
-    for (var ci = cards.length - 1; ci >= 0; ci--) {
-      var c = cards[ci];
-      var cs = scaleAt(c.y) || 0.6;
-      var cw = 144 * cs;   // 카드 가로 폭 판정 (넓어진 카드에 맞춰)
-      var ch = 90 * cs;    // 카드 세로 폭 판정
-      if (Math.abs(c.x - b.x) < cw / 2 + 8 && Math.abs(c.y - b.y) < ch / 2 + 8) {
+    for (var cj = cards.length - 1; cj >= 0; cj--) {
+      var c = cards[cj];
+      var cs2 = scaleAt(c.y) || 0.6;
+      var cw2 = 144 * cs2;   // 카드 가로 폭 판정 (넓어진 카드에 맞춰)
+      var ch2 = 90 * cs2;    // 카드 세로 폭 판정
+      if (Math.abs(c.x - b.x) < cw2 / 2 + 8 && Math.abs(c.y - b.y) < ch2 / 2 + 8) {
         c.hp -= b.power;
         if (c.hp <= 0) {
           applyCard(c);
           addParticles(c.x, c.y, '#FCD34D', 20, 200, 0.5);
-          cards.splice(ci, 1);
+          cards.splice(cj, 1);
         } else {
           // 아직 필요한 총알이 남음 — 맞는 반짝임 표시
           addParticles(c.x, c.y, '#FFFFFF', 4, 130, 0.25);
@@ -1227,7 +1263,8 @@ function updateParticles(dt) {
   for (var i = particles.length - 1; i >= 0; i--) {
     var p = particles[i];
     p.life -= dt;
-    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    // swap-pop: 순서 무관 → 배열 이동 비용 제거 (대부대 파티클 GC 부담 감소)
+    if (p.life <= 0) { particles[i] = particles[particles.length - 1]; particles.pop(); continue; }
     p.vy += 600 * dt;
     p.x += p.vx * dt;
     p.y += p.vy * dt;
@@ -1240,7 +1277,7 @@ function updatePopups(dt) {
     var p = popups[i];
     p.life -= dt;
     p.y -= 40 * dt;
-    if (p.life <= 0) popups.splice(i, 1);
+    if (p.life <= 0) { popups[i] = popups[popups.length - 1]; popups.pop(); }
   }
 }
 
@@ -1570,24 +1607,32 @@ function renderSoldier() {
 function renderBullets() {
   // 대부대(총알 6000발+)는 코어 생략 — 단색 타원 1개로 자동 경량화 (렉 방지)
   var light = bullets.length > 6000;
-  for (var i = 0; i < bullets.length; i++) {
-    var b = bullets[i];
+  var i, b, bs, rx, ry;
+  // 배칭: 전체 탄두를 하나의 패스로 모아 fill 1회 (2만+ draw call → 1~2 fill)
+  ctx.fillStyle = '#FFE566';
+  ctx.beginPath();
+  for (i = 0; i < bullets.length; i++) {
+    b = bullets[i];
     // 원근: 총알이 위(멀리)로 갈수록 얇고 작게, 아래(가까움)로 갈수록 굵게
-    var bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
+    bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
     // 경량 렌더: 잔상·그라디언트·곡선 제거, 단색 타원으로만 (대부대 렉 방지)
-    var rx = 2.0 * bs;   // 작은 탄두 — 대부대에서도 총알 개수가 또렷하게 보임
-    var ry = 5.5 * bs;
-    ctx.fillStyle = '#FFE566';
-    ctx.beginPath();
+    rx = 2.0 * bs;   // 작은 탄두 — 대부대에서도 총알 개수가 또렷하게 보임
+    ry = 5.5 * bs;
+    ctx.moveTo(b.x, b.y);   // 이전 서브패스와 이어진 선 방지
     ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // 밝은 코어 (경량: 별도 그래디언트 없이 반투명 원 하나)
-    if (!light) {
-      ctx.fillStyle = 'rgba(255,255,255,0.8)';
-      ctx.beginPath();
-      ctx.ellipse(b.x, b.y - ry * 0.18, rx * 0.45, ry * 0.42, 0, 0, Math.PI * 2);
-      ctx.fill();
+  }
+  ctx.fill();
+  // 밝은 코어 (경량: 별도 그래디언트 없이 반투명 원 하나) — 배칭으로 fill 1회
+  if (!light) {
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath();
+    for (i = 0; i < bullets.length; i++) {
+      b = bullets[i];
+      bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
+      ctx.moveTo(b.x, b.y - bs);
+      ctx.ellipse(b.x, b.y - bs, 0.9 * bs, 2.31 * bs, 0, 0, Math.PI * 2);
     }
+    ctx.fill();
   }
 }
 
@@ -1952,12 +1997,29 @@ function roundRect(x, y, w, h, r) {
    RENDER — particles & popups
    ═══════════════════════════════════════ */
 function renderParticles() {
+  // 배칭: 색 + 알파(4단계 양자화)별로 서브패스를 모아 fill 1회 — 500개 draw call → ~수개 fill
+  var buckets = {};
   for (var i = 0; i < particles.length; i++) {
     var p = particles[i];
-    ctx.globalAlpha = clamp(p.life / p.maxLife, 0, 1);
-    ctx.fillStyle = p.color;
+    var lv = p.life / p.maxLife;
+    var al = lv > 0.75 ? 3 : lv > 0.5 ? 2 : lv > 0.25 ? 1 : 0;
+    var key = p.color + '|' + al;
+    var bk = buckets[key];
+    if (!bk) bk = buckets[key] = { color: p.color, alpha: 0.22 * al + 0.25, xy: [], r: [] };
+    bk.xy.push(p.x, p.y);
+    bk.r.push(p.size);
+  }
+  for (var k in buckets) {
+    var b2 = buckets[k];
+    var xy = b2.xy;
+    var r2 = b2.r;
+    ctx.globalAlpha = b2.alpha;
+    ctx.fillStyle = b2.color;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    for (var j = 0; j < r2.length; j++) {
+      ctx.moveTo(xy[j * 2], xy[j * 2 + 1]);   // 이전 서브패스와 이어진 선 방지
+      ctx.arc(xy[j * 2], xy[j * 2 + 1], r2[j], 0, Math.PI * 2);
+    }
     ctx.fill();
   }
   ctx.globalAlpha = 1;
