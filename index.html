@@ -1674,77 +1674,117 @@ function renderEnemyFire() {
   }
 }
 
+// 몸통 그라디언트 캐시: 타입별(색상쌍) 단위공간(0,-40)→(0,0)으로 1회만 생성.
+// drawZombieBody에서 translate+scale 트랜스폼으로 재사용 → 프레임당 그라디언트 할당 0
+var BODY_GRADS = {};
+function bodyGrad(color, dark) {
+  var key = color + dark;
+  var g = BODY_GRADS[key];
+  if (!g) {
+    g = ctx.createLinearGradient(0, -40, 0, 0);
+    g.addColorStop(0, color);
+    g.addColorStop(1, dark);
+    BODY_GRADS[key] = g;
+  }
+  return g;
+}
+
 function drawZombieBody(z, cfg) {
   var s = z.scale || scaleAt(z.y) || 0.7;
   var x = z.x;
-  var y = z.y;
-  var ph = z.wobble;                        // 움찔 위상
-  var sq = Math.sin(ph);                    // -1..1 (찌그러짐)
+  var bottom = z.y + 4 * s;                 // 슬라임 바닥(지면)
+  var sq = Math.sin(z.wobble);              // -1..1 (찌그러짐)
   var squash = 1 + sq * 0.13;               // 수직: 펴질 때 세로로 늘어남
   var stretch = 1 - sq * 0.10;              // 수평: 그 반대로 찌그러짐
-  var bottom = y + 4 * s;                   // 슬라임 바닥(지면)
-  var bw = 17 * s * stretch;                // 몸통 반폭
-  var bh = 19 * s * squash;                 // 몸통 반높이(위로 솟은 돔)
-
-  // 바닥 그림자
-  ctx.fillStyle = 'rgba(0,0,0,0.22)';
-  ctx.beginPath();
-  ctx.ellipse(x, bottom + 3 * s, bw + 3 * s, 4 * s, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // 로컬 좌표(스케일 미적용) — 트랜스폼(scale s) 하단에서 그려 시각 동일, 그라디언트 캐시 재사용
+  var Lbw = 17 * stretch;                   // 몸통 반폭
+  var Lbh = 19 * squash;                    // 몸통 반높이(위로 솟은 돔)
 
   // ── 슬라임 몸: 위로 둥글게 솟은 젤리 돔 ──
-  var g = ctx.createLinearGradient(x, bottom - bh * 2, x, bottom);
-  g.addColorStop(0, cfg.color);
-  g.addColorStop(1, cfg.dark);
-  ctx.fillStyle = g;
+  // (그림자·광택·눈은 renderZombies에서 상수색 배치 렌더로 분리 — 좀비 대량 렌더 최적화)
+  ctx.save();
+  ctx.translate(x, bottom);
+  ctx.scale(s, s);
+  ctx.fillStyle = bodyGrad(cfg.color, cfg.dark);
   ctx.beginPath();
-  ctx.moveTo(x - bw, bottom);
-  ctx.bezierCurveTo(x - bw, bottom - bh, x - bw * 0.7, bottom - bh * 1.8, x, bottom - bh * 2);
-  ctx.bezierCurveTo(x + bw * 0.7, bottom - bh * 1.8, x + bw, bottom - bh, x + bw, bottom);
-  ctx.quadraticCurveTo(x, bottom + 3 * s, x - bw, bottom);   // 밑을 살짝 둥글게
+  ctx.moveTo(-Lbw, 0);
+  ctx.bezierCurveTo(-Lbw, -Lbh, -Lbw * 0.7, -Lbh * 1.8, 0, -Lbh * 2);
+  ctx.bezierCurveTo(Lbw * 0.7, -Lbh * 1.8, Lbw, -Lbh, Lbw, 0);
+  ctx.quadraticCurveTo(0, 3, -Lbw, 0);      // 밑을 살짝 둥글게
   ctx.closePath();
   ctx.fill();
+  ctx.restore();
 
   // 몸통 하단 살짝 어두운 볼록(그림자)
+  var bw = 17 * s * stretch;
+  var bh = 19 * s * squash;
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
   ctx.beginPath();
   ctx.ellipse(x, bottom - bh * 0.3, bw * 0.62, bh * 0.26, 0, 0, Math.PI * 2);
   ctx.fill();
+}
 
-  // ── 광택(젤리 윤기) ──
-  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+// ── 렌더 배칭 헬퍼: 좀비 다수의 상수색 요소를 하나의 패스로 모아 fill 1회 ──
+function batchEllipseFill(color, arr, stride) {
+  if (!arr.length) return;
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.ellipse(x - bw * 0.35, bottom - bh * 1.5, bw * 0.26, bh * 0.18, -0.35, 0, Math.PI * 2);
+  for (var i = 0; i < arr.length; i += stride) {
+    var x = arr[i], y = arr[i + 1], rx = arr[i + 2], ry = arr[i + 3];
+    var rot = stride === 5 ? arr[i + 4] : 0;
+    ctx.moveTo(x + rx, y);   // 이전 서브패스와 이어진 선 방지
+    ctx.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
+  }
   ctx.fill();
-
-  // ── 눈: 반짝이는 둥근 눈 (움찔에 따라 위아래로 살짝 움직임) ──
-  var ey = bottom - bh * 1.15 + sq * 2 * s;
-  ctx.fillStyle = '#ffffff';
+}
+function batchCircleFill(color, arr) {
+  if (!arr.length) return;
+  ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.arc(x - 5 * s, ey, 3.2 * s, 0, Math.PI * 2);
-  ctx.arc(x + 5 * s, ey, 3.2 * s, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#1a1a1a';
-  ctx.beginPath();
-  ctx.arc(x - 4.1 * s, ey + 0.4 * s, 1.6 * s, 0, Math.PI * 2);
-  ctx.arc(x + 5.9 * s, ey + 0.4 * s, 1.6 * s, 0, Math.PI * 2);
-  ctx.fill();
-  // 눈 하이라이트
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(x - 4.4 * s, ey - 0.3 * s, 0.6 * s, 0, Math.PI * 2);
-  ctx.arc(x + 5.6 * s, ey - 0.3 * s, 0.6 * s, 0, Math.PI * 2);
+  for (var i = 0; i < arr.length; i += 3) {
+    ctx.moveTo(arr[i] + arr[i + 2], arr[i + 1]);   // 이전 서브패스와 이어진 선 방지
+    ctx.arc(arr[i], arr[i + 1], arr[i + 2], 0, Math.PI * 2);
+  }
   ctx.fill();
 }
 
 function renderZombies() {
+  // 1차 패스: 바닥 그림자 배칭 (몸 아래에 그려야 하므로 먼저)
+  var shadows = [];
   for (var i = 0; i < zombies.length; i++) {
-    var z = zombies[i];
+    var z0 = zombies[i];
+    if (z0.dead) continue;
+    var s0 = z0.scale || 0.7;
+    var sq0 = Math.sin(z0.wobble);
+    var b0 = z0.y + 4 * s0;
+    var bw0 = 17 * s0 * (1 - sq0 * 0.10);
+    shadows.push(z0.x, b0 + 3 * s0, bw0 + 3 * s0, 4 * s0);
+  }
+  batchEllipseFill('rgba(0,0,0,0.22)', shadows, 4);
+
+  // 2차 패스: 몸통(그라디언트) + 상수색 배지 수집 + 상태 배지
+  var glosses = [], whites = [], pupils = [], hls = [];
+  for (var j = 0; j < zombies.length; j++) {
+    var z = zombies[j];
     if (z.dead) continue;
     drawZombieBody(z, ZOMBIE_TYPES[z.type]);
+
+    var s = z.scale || 0.7;
+    var sq = Math.sin(z.wobble);
+    var squash = 1 + sq * 0.13;
+    var stretch = 1 - sq * 0.10;
+    var bottom = z.y + 4 * s;
+    var bw = 17 * s * stretch;
+    var bh = 19 * s * squash;
+    // 상수색 배지 수집 (배치 fill로 한 번에)
+    glosses.push(z.x - bw * 0.35, bottom - bh * 1.5, bw * 0.26, bh * 0.18, -0.35);
+    var ey = bottom - bh * 1.15 + sq * 2 * s;
+    whites.push(z.x - 5 * s, ey, 3.2 * s, z.x + 5 * s, ey, 3.2 * s);
+    pupils.push(z.x - 4.1 * s, ey + 0.4 * s, 1.6 * s, z.x + 5.9 * s, ey + 0.4 * s, 1.6 * s);
+    hls.push(z.x - 4.4 * s, ey - 0.3 * s, 0.6 * s, z.x + 5.6 * s, ey - 0.3 * s, 0.6 * s);
+
     // 방패 좀비: 남은 막기 횟수 배지 (방패가 깨지면 사라짐)
     if (z.shield > 0) {
-      var s = z.scale || 0.7;
       ctx.fillStyle = '#CBD5E1';
       ctx.beginPath();
       ctx.arc(z.x, z.y - 34 * s, 9 * s, 0, Math.PI * 2);
@@ -1772,16 +1812,20 @@ function renderZombies() {
     }
     // 체력바 (데미지 입은 경우)
     if (z.hp < z.maxHp) {
-      var s = z.scale || 0.7;
-      var bw = 28 * s;
-      var bx = z.x - bw / 2;
+      var bw2 = 28 * s;
+      var bx = z.x - bw2 / 2;
       var by = z.y - 50 * s;
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.fillRect(bx, by, bw, 4);
+      ctx.fillRect(bx, by, bw2, 4);
       ctx.fillStyle = '#4ADE80';
-      ctx.fillRect(bx, by, bw * (z.hp / z.maxHp), 4);
+      ctx.fillRect(bx, by, bw2 * (z.hp / z.maxHp), 4);
     }
   }
+  // 상수색 배지 배치 fill
+  batchEllipseFill('rgba(255,255,255,0.35)', glosses, 5);
+  batchCircleFill('#ffffff', whites);
+  batchCircleFill('#1a1a1a', pupils);
+  batchCircleFill('#ffffff', hls);
 }
 
 /* ═══════════════════════════════════════
