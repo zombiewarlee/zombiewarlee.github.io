@@ -855,6 +855,8 @@ function spawnBoss(spreadX) {
   var cfg = BOSS_TYPES[type];
   var baseW = 64 + Math.min(40, wave * 3);
   var baseHp = 220 * wave;               // 기본 체력통(보스 HP) — 웨이브 배수로 확대
+  // 10웨이브 초과부터는 웨이브² 비례로 급증 (연속성: 10웨이브에서 2200으로 동일, 이후 2차 성장)
+  if (wave > 10) baseHp = Math.round(220 * wave * wave / 10);
   var baseSpd = 38 + Math.min(26, wave * 2);
   bosses.push({
     x: W / 2 + (spreadX !== undefined ? spreadX : rand(-W * 0.12, W * 0.12)),   // 대교를 가로질러 분포
