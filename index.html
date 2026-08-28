@@ -802,8 +802,8 @@ function spawnCard() {
   var r = Math.random();
   var kind = 'add';
   var value;
-  // 낮은 확률(7%)로 황금 ×2 카드 — 맞히면 병사가 2배로 (필요 타격수는 대폭)
-  if (r < 0.07) {
+  // 낮은 확률(10%)로 황금 ×2 카드 — 맞히면 병사가 2배로 (필요 타격수는 대폭)
+  if (r < 0.10) {
     kind = 'mul';
     value = 2;
   } else {
