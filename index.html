@@ -466,7 +466,9 @@ var waveTimer = 0;
 var cardTimer = 0;
 var bossTimer = 0;
 var gameTime = 0;
-var bossSpawned = false;   // 이번 웨이브에서 보스 소환 여부 (웨이브 끝 무렵 1회)
+var bossSpawned = false;   // 이번 웨이브 보스 소환 시작 여부 (웨이브 끝 무렵 1회)
+var bossQueue = 0;         // 아직 등장하지 않은 보스 수 — 한 마리씩 랜덤 타이밍으로 등장
+var bossQueueTimer = 0;    // 다음 보스 등장까지 남은 시간(초)
 
 /* ═══════════════════════════════════════
    RECORDS (localStorage)
@@ -753,16 +755,6 @@ function spawnBoss(spreadX) {
     name: '좀비 보스'
   });
 }
-/**
- * 웨이브의 제곱 수만큼 보스를 대교 위에 흩어 스폰
- */
-function spawnWaveBosses(n) {
-  for (var i = 0; i < n; i++) {
-    // 대교 위에 뭉치거나 흩어져 랜덤하게 등장 (일렬 아님)
-    spawnBoss(rand(-W * 0.18, W * 0.18));
-  }
-  addPopups(W / 2, H * 0.2, '👹 좀비 보스 ' + n + '마리 등장!', '#7F1D1D', 24);
-}
 
 /* ═══════════════════════════════════════
    UPDATE — ENTITIES
@@ -1004,10 +996,23 @@ function updateWave(dt) {
     cardTimer = rand(min, min + 3);
   }
 
-  // 웨이브가 끝나갈 때(남은 시간 BOSS_APPEAR_AT 이하) 웨이브 수만큼 보스 등장 — 웨이브당 1회
+  // 웨이브가 끝나갈 때(남은 시간 BOSS_APPEAR_AT 이하) 보스가 한 마리씩 랜덤 타이밍으로 등장
   if (!bossSpawned && waveTimer <= BOSS_APPEAR_AT) {
     bossSpawned = true;
-    spawnWaveBosses(wave);
+    bossQueue = wave;                      // 이번 웨이브 수만큼 대기열에
+    bossQueueTimer = rand(0, 1.0);         // 첫 보스는 잠시 뒤
+    addPopups(W / 2, H * 0.2, '👹 좀비 보스 ' + wave + '마리 접근!', '#7F1D1D', 24);
+  }
+  if (bossQueue > 0) {
+    bossQueueTimer -= dt;
+    if (bossQueueTimer <= 0) {
+      bossQueue--;
+      spawnBoss(rand(-W * 0.18, W * 0.18));
+      if (bossQueue > 0) {
+        // 보스마다 랜덤 간격(1~2.2초) — 한꺼번에 몰려 나오지 않게 각자 타이밍
+        bossQueueTimer = rand(1.0, 2.2);
+      }
+    }
   }
 
   // 웨이브 진행
@@ -1719,6 +1724,8 @@ function startGame() {
   bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
   gameTime = 0;
   bossSpawned = false;   // 웨이브 1도 끝나갈 때 보스 등장
+  bossQueue = 0;         // 대기 중인 보스 없음
+  bossQueueTimer = 0;
 
   // 병사 1명으로 시작하는 대가: 시작하자마자 아이템 카드 1장을 미리 뿌려줌
   // (첫 카드도 곧바로 나오도록 타이머를 앞당김)
