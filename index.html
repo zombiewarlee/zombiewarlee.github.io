@@ -819,8 +819,7 @@ function spawnCard() {
   } else if (wave <= 5) {
     value = randInt(1, 3);          // 중반 진입: 최대 +3
   } else {
-    if (r < 0.30) value = randInt(4, 5);   // 고웨이브: 가끔 +4~+5
-    else value = randInt(1, 4);            // 주로 +1~+4
+    value = randInt(1, 5);          // 고웨이브: +1 ~ +5 균등 확률 (유니폼 샘플링)
   }
   // 먹으려면 필요한 총알 수(HP): 보상이 클수록 + 웨이브² 가중치(제곱)로 더 많이 맞춰야 함
   var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * wave * 1.5));
