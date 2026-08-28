@@ -810,13 +810,9 @@ function spawnCard() {
     // 덧셈(+) 카드: 웨이브와 무관하게 +1 ~ +10 균등 확률 (유니폼 샘플링)
     value = randInt(1, 10);
   }
-  // 보상이 클수록 + 웨이브² 가중치로 더 많이 맞춰야 함
-  var hp = Math.max(12, Math.round(value * 2.6) + Math.floor(wave * wave * 1.5));
+  // 보상이 클수록 + 웨이브 정배 곱셈 + 병사수 가산(보정) — 깰 필요 타격수 결정
+  var hp = (Math.max(12, Math.round(value * 2.6)) + Math.round(soldier.lives / 10)) * wave;
   if (kind === 'mul') hp = Math.round(hp * 3);   // ×2 카드: 필요 타격수 3배 (황금 보상은 각오 필요)
-  // 병사수 가중치 — 제곱 없이 병사 수 그대로 정비례. 화력도 병사 수에 정비례하므로
-  // 병사가 아무리 많아도 카드 1장을 깨는 데 드는 총알 사이클 수가 일정하게 유지됨
-  var wLives = Math.max(1, soldier.lives);
-  hp = Math.round(hp * wLives);
   cards.push({
     x: W / 2 + rand(-W * 0.35, W * 0.35),   // 대교 위(지평선)에서 흩어져 나옴 — 좀비처럼
     y: horizonY(),
