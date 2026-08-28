@@ -1550,16 +1550,6 @@ function renderSoldier() {
     var s = m * (0.94 + 0.06 * clamp(p.yPart || 0, 0, 1));
     drawTrooper(p.x, p.y, s, p.phase, i === 0);
   }
-
-  // 발사선 가이드 (중앙 한 줄)
-  ctx.strokeStyle = 'rgba(37,99,235,0.12)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([4, 14]);
-  ctx.beginPath();
-  ctx.moveTo(soldier.x, soldierY() - 60);
-  ctx.lineTo(soldier.x, 14);
-  ctx.stroke();
-  ctx.setLineDash([]);
 }
 
 /* ═══════════════════════════════════════
