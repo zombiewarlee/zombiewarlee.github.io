@@ -360,6 +360,9 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
         <p><b>🟢 좀비:</b> 기본 몬스터</p>
         <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
         <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
+        <p><b>🧱 방패 좀비:</b> 처음 6발은 무효! 방패가 깨진 뒤엔 약해요 (쇳빛)</p>
+        <p><b>🫧 분열 좀비:</b> 죽으면 작은 좀비 2마리로 쪼개져요 (민트색, 5웨이브부터)</p>
+        <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황)</p>
         <p><b>👹 좀비 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터는 <b>속도·탱크 보스</b>도 섞여 등장!</p>
       </div>
       <div class="help-section">
@@ -422,7 +425,11 @@ var MAX_PARTICLES = 500;
 var ZOMBIE_TYPES = {
   normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },  // 초록
   fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#e0483f', dark: '#8f2a24', dmg: 1 },  // 붉은색(빠름)
-  tank:   { hp: 85, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 }   // 보라
+  tank:   { hp: 85, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 },  // 보라
+  shield: { hp: 22, speed: 34,  w: 30, score: 0,  color: '#64748B', dark: '#334155', dmg: 1, shield: 6 },   // 쇳빛 — 첫 6발 무효(깨짐)
+  split:  { hp: 36, speed: 42,  w: 30, score: 0,  color: '#14B8A6', dark: '#0F766E', dmg: 1, splits: 2 },   // 민트 — 죽으면 2마리로 분열
+  mini:   { hp: 10, speed: 48,  w: 18, score: 0,  color: '#5EEAD4', dark: '#0F766E', dmg: 1 },   // 분열로 나오는 작은 좀비
+  ranged: { hp: 16, speed: 36,  w: 26, score: 0,  color: '#F97316', dark: '#9A3412', dmg: 1, shoots: true } // 주황 — 총알 발사
 };
 
 // 보스 종류별 배율/색상 — 5웨이브부터 섞여 등장 (일반=초록, 빠른=붉은, 탱크=보라)
@@ -437,6 +444,7 @@ var BOSS_MIN_DELAY = 20;               // 보스 최소 출몰 간격(초)
 var BOSS_MAX_DELAY = 32;
 var CARD_BASE_INTERVAL = 8;            // 카드 기본 등장 간격(초) — 빈도 낮춤
 var BOSS_APPEAR_AT = 5;                // 웨이브가 끝나기 N초 전에 보스 등장
+var ENEMY_CHARGE = 0.45;               // 원거리 좀비 발사 전 조준(차징) 시간(초) — 피할 틈을 주는 예고
 
 /* ═══════════════════════════════════════
    DOM REFERENCES
@@ -485,6 +493,7 @@ var zombies = [];
 var bosses = [];
 var bullets = [];
 var cards = [];
+var enemyFire = [];   // 적(원거리 좀비) 총알 — 병사를 맞히면 군인 감소, 좌우로 피하면 회피
 var particles = [];
 var popups = [];
 
@@ -742,9 +751,19 @@ function getHpForWave() {
 function pickZombieType() {
   var tankChance = wave >= 4 ? Math.min(0.18, 0.04 + wave * 0.008) : 0;
   var fastChance = wave >= 2 ? Math.min(0.3, 0.1 + wave * 0.012) : 0;
+  var shieldChance = wave >= 3 ? Math.min(0.2, 0.05 + wave * 0.008) : 0;
+  var splitChance = wave >= 5 ? Math.min(0.16, 0.04 + wave * 0.008) : 0;
+  var rangedChance = wave >= 3 ? Math.min(0.16, 0.04 + wave * 0.007) : 0;
   var r = Math.random();
   if (r < tankChance) return 'tank';
-  if (r < tankChance + fastChance) return 'fast';
+  r -= tankChance;
+  if (r < fastChance) return 'fast';
+  r -= fastChance;
+  if (r < shieldChance) return 'shield';
+  r -= shieldChance;
+  if (r < splitChance) return 'split';
+  r -= splitChance;
+  if (r < rangedChance) return 'ranged';
   return 'normal';
 }
 
@@ -776,7 +795,10 @@ function spawnZombie() {
       wobble: rand(0, Math.PI * 2),
       wobbleSpeed: rand(3, 6),
       id: zombieId++,
-      dead: false
+      dead: false,
+      shield: cfg.shield || 0,       // 방패 좀비: 남은 막기 횟수 (깨지면 0)
+      fireTimer: rand(1.2, 2.4),     // 원거리 좀비: 첫 발사까지 대기 (등장 직후 안 쏨)
+      charging: 0                    // 원거리 좀비: 조준 차징 잔여 시간
     });
   }
 }
@@ -921,10 +943,19 @@ function hitZombies(b) {
     var hw = z.w * 0.62 * zs + 4;    // 가로 판정 반폭 (여유 포함)
     var hh = z.w * 0.9 * zs + 4;     // 세로 판정 반높이
     if (Math.abs(zcx - b.x) < hw && Math.abs(zcy - b.y) < hh) {
-      z.hp -= b.power;
-      addParticles(b.x, zcy, '#B91C1C', 5, 120, 0.4);
-      if (z.hp <= 0) {
-        killZombie(zi, z);
+      // 방패 좀비: 남은 막기 횟수가 있으면 피해 대신 방패가 한 번 막아줌 (깨지면 무효)
+      if (z.shield > 0) {
+        z.shield--;
+        addParticles(b.x, zcy, '#E2E8F0', 8, 160, 0.35);
+        if (z.shield <= 0) {
+          addPopups(z.x, z.y - 16, '🧱 방패 파괴!', '#94A3B8', 14);
+        }
+      } else {
+        z.hp -= b.power;
+        addParticles(b.x, zcy, '#B91C1C', 5, 120, 0.4);
+        if (z.hp <= 0) {
+          killZombie(zi, z);
+        }
       }
       hit = true;
       break;
@@ -957,9 +988,34 @@ function hitBosses(b) {
 function killZombie(zi, z) {
   z.dead = true;
   kills++;
-  score += ZOMBIE_TYPES[z.type].score;
-  addParticles(z.x, z.y, ZOMBIE_TYPES[z.type].color, 16, 180, 0.6);
-  addPopups(z.x, z.y - 10, '+' + ZOMBIE_TYPES[z.type].score, '#16A34A', 15);
+  var tcfg = ZOMBIE_TYPES[z.type];
+  score += tcfg.score;
+  addParticles(z.x, z.y, tcfg.color, 16, 180, 0.6);
+  // 점수가 있는 타입만 +점수 표기 (신규 타입은 점수 없이 처치수만 카운트)
+  if (tcfg.score > 0) addPopups(z.x, z.y - 10, '+' + tcfg.score, '#16A34A', 15);
+  // 분열 좀비: 죽으면 작은 좀비 2마리로 쪼개짐 (점수 없음, 처치수만)
+  if (tcfg.splits) {
+    var miniCfg = ZOMBIE_TYPES.mini;
+    for (var si = 0; si < tcfg.splits; si++) {
+      zombies.push({
+        x: z.x + rand(-10, 10),
+        y: z.y - 4,
+        baseSpeed: miniCfg.speed,
+        type: 'mini',
+        w: miniCfg.w,
+        hp: miniCfg.hp,
+        maxHp: miniCfg.hp,
+        scale: z.scale,
+        wobble: z.wobble + si * Math.PI,
+        wobbleSpeed: rand(4, 7),
+        id: zombieId++,
+        dead: false,
+        shield: 0,
+        fireTimer: 99,
+        charging: 0
+      });
+    }
+  }
   updateHUD();
 }
 
@@ -996,11 +1052,65 @@ function updateZombies(dt) {
     z.scale = scaleAt(z.y);
     z.wobble += z.wobbleSpeed * dt * scaleAt(z.y);
 
+    // 원거리 좀비: 조준 차징 후 병사를 향해 총알 발사 (차징 중 ❗ 표시 → 피할 틈)
+    if (ZOMBIE_TYPES[z.type].shoots) {
+      if (z.charging > 0) {
+        z.charging -= dt;
+        if (z.charging <= 0) {
+          z.charging = 0;
+          fireEnemyShot(z);
+          z.fireTimer = rand(2.4, 3.4);   // 발사 후 재충전 대기
+        }
+      } else {
+        z.fireTimer -= dt;
+        if (z.fireTimer <= 0) z.charging = ENEMY_CHARGE;   // 조준 예고 시작
+      }
+    }
+
     if (z.y >= hitLine) {
       soldierHit(ZOMBIE_TYPES[z.type].dmg);
       addParticles(z.x, hitLine, ZOMBIE_TYPES[z.type].color, 12, 180, 0.6);
       zombies.splice(i, 1);
     }
+  }
+}
+
+// 원거리 좀비: 발사 순간 병사 위치를 조준하되 살짝 빗나갈 여지를 둠 (좌우로 피하면 회피 가능)
+function fireEnemyShot(z) {
+  var s = z.scale || 1;
+  var shootY = z.y + 14 * s;
+  var dy = soldierY() - shootY;
+  if (dy <= 0) return;                     // 이미 방어선을 지났으면 발사 안 함
+  var spd = 200;
+  var aimX = soldier.x + rand(-36, 36);    // 조준점 오차 — 완벽 추적 방지
+  var t = dy / spd;
+  var vx = clamp((aimX - z.x) / t, -160, 160);
+  enemyFire.push({
+    x: z.x,
+    y: shootY,
+    vx: vx,
+    vy: spd,
+    dmg: 1,
+    spin: rand(0, Math.PI * 2)
+  });
+  addParticles(z.x, shootY, '#F97316', 6, 130, 0.3);
+}
+
+// 적 총알 이동 — 거의 수직 하강(미세 조준)하며 병사에 닿으면 군인 감소
+function updateEnemyFire(dt) {
+  var sy = soldierY();
+  for (var i = enemyFire.length - 1; i >= 0; i--) {
+    var ef = enemyFire[i];
+    ef.x += ef.vx * dt;
+    ef.y += ef.vy * dt;
+    // 병사 피격 판정 — 부대 위치(±26px)에 닿으면 명중, 아니면 좌우로는 그냥 지나침
+    if (ef.y >= sy - 10 && Math.abs(ef.x - soldier.x) < 26) {
+      enemyFire.splice(i, 1);
+      soldierHit(ef.dmg);
+      addParticles(soldier.x, sy - 30, '#F97316', 14, 220, 0.5);
+      continue;
+    }
+    if (ef.y > H + 30) { enemyFire.splice(i, 1); }
   }
 }
 
@@ -1134,6 +1244,7 @@ function update(dt) {
   updateZombies(dt);
   updateBosses(dt);
   updateCards(dt);
+  updateEnemyFire(dt);
   updateParticles(dt);
   updatePopups(dt);
   updateWave(dt);
@@ -1448,6 +1559,33 @@ function renderBullets() {
 /* ═══════════════════════════════════════
    RENDER — zombie
    ═══════════════════════════════════════ */
+function renderEnemyFire() {
+  for (var i = 0; i < enemyFire.length; i++) {
+    var ef = enemyFire[i];
+    var ang = Math.atan2(ef.vy, ef.vx);
+    ctx.save();
+    ctx.translate(ef.x, ef.y);
+    ctx.rotate(ang);
+    // 주황 불꽃 총알 (꼬리 포함)
+    ctx.shadowColor = 'rgba(249,115,22,0.9)';
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#FDBA74';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#F97316';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 6.5, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(249,115,22,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(-9, 0, 5, 2.2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
 function drawZombieBody(z, cfg) {
   var s = z.scale || scaleAt(z.y) || 0.7;
   var x = z.x;
@@ -1516,6 +1654,34 @@ function renderZombies() {
     var z = zombies[i];
     if (z.dead) continue;
     drawZombieBody(z, ZOMBIE_TYPES[z.type]);
+    // 방패 좀비: 남은 막기 횟수 배지 (방패가 깨지면 사라짐)
+    if (z.shield > 0) {
+      var s = z.scale || 0.7;
+      ctx.fillStyle = '#CBD5E1';
+      ctx.beginPath();
+      ctx.arc(z.x, z.y - 34 * s, 9 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0F172A';
+      ctx.font = 'bold ' + Math.round(11 * s) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(String(z.shield), z.x, z.y - 30 * s);
+      ctx.textAlign = 'left';
+    }
+    // 원거리 좀비: 조준 차징 중이면 커지는 ❗ 경고 (발사 직전에 클수록 급박)
+    if (z.charging > 0) {
+      var sc = z.scale || 0.7;
+      var pulse = 1 + Math.sin(gameTime * 20) * 0.12;
+      var prog = z.charging / ENEMY_CHARGE;   // 0~1 (발사 직전 0)
+      var size = (14 + 26 * (1 - prog)) * sc * pulse;
+      ctx.font = 'bold ' + Math.round(size) + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#FDE68A';
+      ctx.shadowColor = 'rgba(253,230,138,0.9)';
+      ctx.shadowBlur = 8;
+      ctx.fillText('❗', z.x, z.y - (20 + 24 * (1 - prog)) * sc);
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'left';
+    }
     // 체력바 (데미지 입은 경우)
     if (z.hp < z.maxHp) {
       var s = z.scale || 0.7;
@@ -1755,6 +1921,7 @@ function render() {
   renderZombies();
   renderBosses();
   renderBullets();
+  renderEnemyFire();
   renderSoldier();
   renderParticles();
   renderPopups();
@@ -1819,6 +1986,7 @@ function startGame(fromSave) {
   bosses.length = 0;
   bullets.length = 0;
   cards.length = 0;
+  enemyFire.length = 0;
   particles.length = 0;
   popups.length = 0;
 
