@@ -362,7 +362,7 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
         <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색, 7웨이브부터)</p>
         <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황, 9웨이브부터)</p>
         <p><b>🧱 방패 좀비:</b> 방패가 아주 단단해요! 첫 등장(11웨이브) 100발부터 시작해 웨이브마다 늘어나요 (검은색)</p>
-        <p><b>👹 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터 <b>속도·탱크</b>, 6웨이브부터 <b>방패·원거리</b>, 7웨이브부터 <b>분열 보스</b>까지 섞여 등장! 분열 보스는 죽으면 작은 좀비를 쏟아내요.</p>
+        <p><b>👹 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 좀비 종류와 같은 웨이브부터 <b>분열(3)·빠른(5)·탱크(7)·원거리(9)·방패(11)</b> 보스가 섞여 등장! 분열 보스는 죽으면 작은 좀비를 쏟아내요.</p>
       </div>
       <div class="help-section">
         <h3>🪖 목숨 (군인)</h3>
@@ -827,16 +827,18 @@ function spawnCard() {
 }
 
 function pickBossType() {
-  // 5웨이브부터 빠른·탱크 보스, 6웨이브부터 방패·원거리 보스, 7웨이브부터 분열 보스가 섞여 등장 (그 전엔 일반 보스만)
-  if (wave < 5) return 'normal';
+  // 좀비 종류 도입 웨이브와 동일 게이트로 보스도 등장: 분열 3 · 빠른 5 · 탱크 7 · 원거리 9 · 방패 11 (그 전엔 일반 보스만)
+  if (wave < 3) return 'normal';
   var r = Math.random();
-  var shieldG = wave >= 6 ? 0.16 : 0;
-  var rangedG = wave >= 6 ? 0.14 : 0;
-  var splitG = wave >= 7 ? 0.15 : 0;
-  if (r < 0.30) return 'fast';
-  r -= 0.30;
-  if (r < 0.25) return 'tank';
-  r -= 0.25;
+  var splitG = wave >= 3 ? 0.15 : 0;
+  var fastG = wave >= 5 ? 0.30 : 0;
+  var tankG = wave >= 7 ? 0.25 : 0;
+  var rangedG = wave >= 9 ? 0.14 : 0;
+  var shieldG = wave >= 11 ? 0.16 : 0;
+  if (r < fastG) return 'fast';
+  r -= fastG;
+  if (r < tankG) return 'tank';
+  r -= tankG;
   if (r < shieldG) return 'shield';
   r -= shieldG;
   if (r < rangedG) return 'ranged';
@@ -847,7 +849,7 @@ function pickBossType() {
 
 function spawnBoss(spreadX) {
   // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장.
-  // 5웨이브부터는 종류(일반/빠른/탱크)가 섞여 등장.
+  // 3웨이브부터는 종류(분열→빠른→탱크→원거리→방패)가 좀비 도입 웨이브에 맞춰 섞여 등장.
   // 스폰 위치는 지평선(대교) 중앙 — 유저(병사) 위치와 무관하게 고정
   var type = pickBossType();
   var cfg = BOSS_TYPES[type];
