@@ -417,7 +417,7 @@ var BULLET_SPEED = 420;                // 총알 상승 속도
 var HORIZON_RATIO = 0.5;               // 지평선(먼 땅) y 비율 — 좀비/아이템이 여기서 걸어 나옴
 var GUN_Y = 0.78;                      // 병사 총구 기준 y 비율
 var MAX_BULLETS_BASE = 60;             // 기본 최대 총알
-var BULLETS_PER_MEMBER = 7;            // 병사 1명당 허용 총알 수
+var BULLETS_PER_MEMBER = 9;            // 병사 1명당 허용 총알 수 (7→9: 1200명까지 스로틀 없이 풀 화력, 렌더링 경량화로 상한 확대)
 var MAX_PARTICLES = 500;
 
 var ZOMBIE_TYPES = {
@@ -723,8 +723,7 @@ function spawnBullet(x, y) {
     y: y,
     vx: vx,
     vy: -BULLET_SPEED,
-    power: power,
-    trail: []
+    power: power
   });
 }
 // 부대 전체 발사: 병사 수만큼의 총알이 동시에 직선으로 나감
@@ -902,9 +901,6 @@ function updateBullets(dt) {
     b.x += b.vx * dt;
     b.y += b.vy * dt;
     b.vy = -BULLET_SPEED;
-
-    b.trail.push({ x: b.x, y: b.y });
-    if (b.trail.length > 18) b.trail.shift();
 
     var hitSomething = false;
     // 카드 충돌 — 필요한 총알 수(HP)만큼 모두 맞춰야 먹을 수 있음
@@ -1563,43 +1559,17 @@ function renderBullets() {
     var b = bullets[i];
     // 원근: 총알이 위(멀리)로 갈수록 얇고 작게, 아래(가까움)로 갈수록 굵게
     var bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
-    // 짧고 옅은 운동 꼬리 (마지막 3개 궤적 점만 — 길게 안 늘어짐)
-    var tr = b.trail;
-    if (tr.length >= 2) {
-      var start = Math.max(0, tr.length - 3);
-      ctx.strokeStyle = 'rgba(255,225,150,0.3)';
-      ctx.lineWidth = 2.4 * bs;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tr[start].x, tr[start].y);
-      for (var t = start + 1; t < tr.length; t++) ctx.lineTo(tr[t].x, tr[t].y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-    }
-    // 도탄(타원형 총알) 본체: 위로 늘어진 길쭉한 발광 탄두
-    var rx = 3.4 * bs;     // 가로 반지름
-    var ry = 10 * bs;      // 세로 반지름 (이동 방향 = 위)
-    var g = ctx.createRadialGradient(b.x, b.y - ry * 0.4, 0, b.x, b.y, ry * 1.2);
-    g.addColorStop(0, '#FFFDF0');              // 밝은 중심
-    g.addColorStop(0.4, '#FFE566');
-    g.addColorStop(1, 'rgba(255,150,40,0)');   // 가장자리로 흐려짐
-    ctx.fillStyle = g;
+    // 경량 렌더: 잔상·그라디언트·곡선 제거, 단색 타원으로만 (대부대 렉 방지)
+    var rx = 3.2 * bs;
+    var ry = 8.5 * bs;
+    ctx.fillStyle = '#FFE566';
     ctx.beginPath();
-    // 뾰족한 탄두(위) + 둥근 바닥(아래) — 도탄 실루엣
-    ctx.moveTo(b.x, b.y - ry);
-    ctx.bezierCurveTo(b.x + rx, b.y - ry * 0.2, b.x + rx, b.y + ry * 0.4, b.x, b.y + ry * 0.9);
-    ctx.bezierCurveTo(b.x - rx, b.y + ry * 0.4, b.x - rx, b.y - ry * 0.2, b.x, b.y - ry);
-    ctx.closePath();
+    ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
-    // 밝은 코어
-    ctx.fillStyle = '#FFF8D0';
+    // 밝은 코어 (경량: 별도 그래디언트 없이 반투명 원 하나)
+    ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.beginPath();
-    ctx.ellipse(b.x, b.y - ry * 0.15, rx * 0.5, ry * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // 뾰족한 앞머리 발광 포인트
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    ctx.beginPath();
-    ctx.arc(b.x, b.y - ry * 0.62, 1.8 * bs, 0, Math.PI * 2);
+    ctx.ellipse(b.x, b.y - ry * 0.18, rx * 0.45, ry * 0.42, 0, 0, Math.PI * 2);
     ctx.fill();
   }
 }
