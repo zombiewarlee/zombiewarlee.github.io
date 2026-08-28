@@ -409,6 +409,7 @@ var PORTAL_URL = 'https://appa-games.github.io/';
 
 var SOLDIER_Y_RATIO = 0.86;            // 부대 중심 y 위치 (화면 비율)
 var REF_H = 800;                       // 기준 화면 높이(px) — 세로 길이와 무관하게 도착 시간 일정
+var REF_W = 504;                       // 기준 화면 폭(px, 컨테이너 최대 폭) — 가로 기동 시간 일정
 var SOLDIER_SPEED = 320;               // px/sec (좌우 이동)
 var FIRE_INTERVAL = 0.20;              // 병사 1명이 쏘는 발사 간격(초)
 var BULLET_SPEED = 420;                // 총알 상승 속도
@@ -602,6 +603,9 @@ function scaleAt(y) {
 // 화면 세로 길이 보정 — px/초 속도는 유지하되, 세로가 길어 이동 거리가 늘어도
 // 좀비/보스/카드의 방어선 도착 시간이 화면 높이와 무관하게 일정하도록 보정
 function speedFactor() { return H / REF_H; }
+// 가로 폭 보정 — 대교 폭·스폰 범위가 W에 비례하는데 병사 이동 속도는 px/초 고정이라,
+// 화면 폭이 달라도 상대적으로 같은 기동 시간이 되도록 보정 (레터박스 없이 전체 화면 유지)
+function hFactor() { return W / REF_W; }
 function soldierY() { return H * SOLDIER_Y_RATIO; }   // 방어선(부대 발 밑) y
 function horizonY() { return H * 0.04; }               // 좀비/아이템이 걸어 나오는 화면 상단(먼 땅) 라인
 function squadY()   { return H * SOLDIER_Y_RATIO; }    // 부대 원형 포메이션 기준 y
@@ -841,8 +845,8 @@ function spawnBoss(spreadX) {
    UPDATE — ENTITIES
    ═══════════════════════════════════════ */
 function updateSoldier(dt) {
-  if (keys.left) soldier.x -= SOLDIER_SPEED * dt;
-  if (keys.right) soldier.x += SOLDIER_SPEED * dt;
+  if (keys.left) soldier.x -= SOLDIER_SPEED * hFactor() * dt;
+  if (keys.right) soldier.x += SOLDIER_SPEED * hFactor() * dt;
   soldier.x = clamp(soldier.x, 40, W - 40);
   soldier.bob += dt * 4;
   soldier.muteFlash = Math.max(0, soldier.muteFlash - dt);
