@@ -156,6 +156,18 @@ body{
 .btn-start:active{background:#15803D;transform:scale(0.97)}
 .btn-start .btn-tip{font-size:var(--text-sm);font-weight:var(--weight-medium);opacity:0.9}
 
+.btn-continue{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--space-1);
+  width:100%;margin-top:var(--space-3);padding:var(--space-4) var(--space-5);
+  border-radius:var(--btn-radius);border:3px solid var(--primary);
+  background:var(--primary-light);color:var(--primary-hover);font-size:var(--text-xl);
+  font-weight:var(--weight-extrabold);font-family:var(--font-family);cursor:pointer;
+  min-height:var(--touch-min);box-shadow:var(--shadow-md);line-height:1.3;
+  transition:all var(--transition-base);-webkit-tap-highlight-color:transparent;
+}
+.btn-continue:active{background:var(--primary-light);transform:scale(0.97)}
+.btn-continue .btn-tip{font-size:var(--text-sm);font-weight:var(--weight-medium);opacity:0.85}
+
 .records-summary{margin-top:var(--space-6);flex-shrink:0}
 .section-title{font-size:var(--text-lg);font-weight:var(--weight-extrabold);color:var(--text);text-align:center;margin-bottom:var(--space-3)}
 .records-list{display:flex;flex-direction:column;gap:var(--space-2)}
@@ -292,6 +304,11 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
       <span class="btn-tip">좌우로 움직여 사격하세요</span>
     </button>
 
+    <button class="btn-continue" id="btnContinue" type="button" aria-label="이어하기" hidden>
+      ▶️ 이어하기
+      <span class="btn-tip" id="continueTip"></span>
+    </button>
+
     <div class="records-summary">
       <h2 class="section-title">🏆 최고 기록</h2>
       <div class="records-list" id="recordsList"></div>
@@ -387,6 +404,7 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
    CONSTANTS
    ═══════════════════════════════════════ */
 var RECORDS_KEY = 'zombiewar_records_v1';
+var SAVE_KEY = 'zombiewar_save_v1';      // 이어하기(진행 중 상태) 저장 키
 var PORTAL_URL = 'https://appa-games.github.io/';
 
 var SOLDIER_Y_RATIO = 0.86;            // 부대 중심 y 위치 (화면 비율)
@@ -425,6 +443,8 @@ var screenStart = document.getElementById('screenStart');
 var screenGame = document.getElementById('screenGame');
 var recordsList = document.getElementById('recordsList');
 var btnStart = document.getElementById('btnStart');
+var btnContinue = document.getElementById('btnContinue');
+var continueTip = document.getElementById('continueTip');
 var canvasWrap = document.getElementById('canvasWrap');
 var gameCanvas = document.getElementById('gameCanvas');
 var ctx = gameCanvas.getContext('2d');
@@ -476,6 +496,7 @@ var gameTime = 0;
 var bossSpawned = false;   // 이번 웨이브 보스 소환 시작 여부 (웨이브 끝 무렵 1회)
 var bossQueue = 0;         // 아직 등장하지 않은 보스 수 — 한 마리씩 랜덤 타이밍으로 등장
 var bossQueueTimer = 0;    // 다음 보스 등장까지 남은 시간(초)
+var autosaveTimer = 0;     // 진행 상태 자동 저장 주기 타이머 (이어하기용)
 
 /* ═══════════════════════════════════════
    RECORDS (localStorage)
@@ -505,6 +526,7 @@ function renderStartRecords() {
   html += '<div class="record-row"><span class="record-diff">최다 처치</span><span class="record-best"><span class="record-time">' + (records.bestKills > 0 ? records.bestKills + '마리' : '--') + '</span></span></div>';
   html += '<div class="record-row"><span class="record-diff">총 처치</span><span class="record-best"><span class="record-time">' + records.totalKills + '마리</span></span></div>';
   recordsList.innerHTML = html;
+  renderContinueButton();
 }
 function updateRecordsOnFinish() {
   var records = loadRecords();
@@ -522,6 +544,40 @@ function updateRecordsRealTime() {
   if (wave > records.bestWave) { records.bestWave = wave; changed = true; }
   if (kills > records.bestKills) { records.bestKills = kills; changed = true; }
   if (changed) saveRecords(records);
+}
+
+/* ── 이어하기: 진행 중 상태 저장/복원 ── */
+function saveProgress() {
+  if (phase !== 'playing') return;
+  var data = {
+    wave: wave,
+    score: score,
+    kills: kills,
+    lives: soldier.lives,
+    savedAt: Date.now()
+  };
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(data)); } catch (e) {}
+}
+function loadProgress() {
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    var d = JSON.parse(raw);
+    if (typeof d.wave !== 'number' || d.wave < 1 || typeof d.lives !== 'number' || d.lives < 1) return null;
+    return d;
+  } catch (e) { return null; }
+}
+function clearProgress() {
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+}
+function renderContinueButton() {
+  var d = loadProgress();
+  if (d) {
+    continueTip.textContent = '웨이브 ' + d.wave + ' · ⭐ ' + formatNumber(d.score) + ' · 🪖 ' + d.lives;
+    btnContinue.hidden = false;
+  } else {
+    btnContinue.hidden = true;
+  }
 }
 
 /* ═══════════════════════════════════════
@@ -1003,6 +1059,13 @@ function spawnRate() { return Math.min(3.4, 0.42 + wave * 0.12); }
 function updateWave(dt) {
   gameTime += dt;
   waveTimer -= dt;
+
+  // 진행 상태 자동 저장 (3초마다) — 이어하기용
+  autosaveTimer -= dt;
+  if (autosaveTimer <= 0) {
+    autosaveTimer = 3;
+    saveProgress();
+  }
 
   // 좀비 지속 스폰
   if (Math.random() < spawnRate() * dt) {
@@ -1715,7 +1778,7 @@ function stopLoop() {
 /* ═══════════════════════════════════════
    GAME START / END
    ═══════════════════════════════════════ */
-function startGame() {
+function startGame(fromSave) {
   screenStart.classList.remove('show');
   screenGame.classList.add('show');
   modalGameOver.classList.remove('show');
@@ -1723,8 +1786,11 @@ function startGame() {
   W = 0; H = 0;
   resizeCanvas();
 
+  var saved = fromSave ? loadProgress() : null;
+
   soldier.x = W / 2;
-  soldier.lives = 1;   // 처음엔 병사 1명 — 대신 초반 아이템 카드를 미리 뿌려줌
+  // 이어하기면 저장된 병사 수로 시작, 새 게임이면 병사 1명
+  soldier.lives = saved ? saved.lives : 1;
   soldier.fireTimer = 0;
   soldier.muteFlash = 0;
   soldier.recoil = 0;
@@ -1737,21 +1803,28 @@ function startGame() {
   particles.length = 0;
   popups.length = 0;
 
-  wave = 1;
-  score = 0;
-  kills = 0;
+  wave = saved ? saved.wave : 1;
+  score = saved ? saved.score : 0;
+  kills = saved ? saved.kills : 0;
   waveTimer = WAVE_DURATION;
   cardTimer = 3;
   bossTimer = rand(BOSS_MIN_DELAY, BOSS_MAX_DELAY);
   gameTime = 0;
-  bossSpawned = false;   // 웨이브 1도 끝나갈 때 보스 등장
+  bossSpawned = false;   // 이어하기도 해당 웨이브 보스는 끝나갈 때 등장
   bossQueue = 0;         // 대기 중인 보스 없음
   bossQueueTimer = 0;
+  autosaveTimer = 2;
 
-  // 병사 1명으로 시작하는 대가: 시작하자마자 아이템 카드 1장을 미리 뿌려줌
-  // (첫 카드도 곧바로 나오도록 타이머를 앞당김)
+  // 시작하자마자 아이템 카드 1장을 미리 뿌려줌 (첫 카드도 곧바로 나오도록 타이머를 앞당김)
   cardTimer = 1.2;
   spawnCard();
+
+  if (saved) {
+    // 이어하기: 저장된 진행 유지 (게임 종료/새 게임 시에만 삭제)
+    addPopups(W / 2, H * 0.3, '▶️ 웨이브 ' + wave + ' 이어하기', '#2563EB', 24);
+  } else {
+    clearProgress();   // 새 게임: 이전 진행 삭제
+  }
 
   updateHUD();
   phase = 'playing';
@@ -1762,6 +1835,7 @@ function endGame() {
   if (phase !== 'playing') return;
   phase = 'over';
   stopLoop();
+  clearProgress();   // 게임 종료 → 이어하기 데이터 삭제
   goWave.textContent = wave;
   goKills.textContent = formatNumber(kills);
   goScore.textContent = formatNumber(score);
@@ -1774,6 +1848,7 @@ function endGame() {
 }
 
 function backHome() {
+  saveProgress();   // 진행 중이면 이어하기용 상태 저장
   stopLoop();
   phase = 'idle';
   screenGame.classList.remove('show');
@@ -1846,8 +1921,9 @@ document.addEventListener('keyup', function(e) {
 /* ═══════════════════════════════════════
    BIND EVENTS
    ═══════════════════════════════════════ */
-btnStart.addEventListener('click', function() { startGame(); });
-btnGoRetry.addEventListener('click', function() { modalGameOver.classList.remove('show'); startGame(); });
+btnStart.addEventListener('click', function() { startGame(false); });
+btnContinue.addEventListener('click', function() { startGame(true); });
+btnGoRetry.addEventListener('click', function() { modalGameOver.classList.remove('show'); startGame(false); });
 btnGoHome.addEventListener('click', function() { backHome(); });
 btnHelp.addEventListener('click', function() { modalHelp.classList.add('show'); });
 btnHelpClose.addEventListener('click', function() { modalHelp.classList.remove('show'); });
@@ -1869,6 +1945,7 @@ window.addEventListener('orientationchange', function() {
 
 document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'hidden' && phase === 'playing') {
+    saveProgress();           // 탭을 벗어나면 즉시 저장 (이어하기용)
     updateRecordsRealTime();
   }
 });
