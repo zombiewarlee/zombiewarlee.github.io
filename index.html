@@ -1360,12 +1360,9 @@ function update(dt) {
    좀비/아이템이 상단(먼 땅)에서 나와 하단(병사)으로 한 줄로 걸어 내려온다.
    ═══════════════════════════════════════ */
 function renderBattlefield() {
-  // 강물 전체 (top-down): 위(멀리)=연한 물색, 아래(가까이)=짙은 물색
-  var g = ctx.createLinearGradient(0, 0, 0, H);
-  g.addColorStop(0, '#5FA8C9');
-  g.addColorStop(0.5, '#3E83B0');
-  g.addColorStop(1, '#2A5E88');
-  ctx.fillStyle = g;
+  // 강물 전체 (top-down): 위(멀리)=연한 물색, 아래(가까이)=짙은 물색 — 캐시(좌표 고정)
+  ctx.fillStyle = sceneGrad('water|' + H, 0, 0, 0, H,
+    [0, '#5FA8C9', 0.5, '#3E83B0', 1, '#2A5E88']);
   ctx.fillRect(0, 0, W, H);
 
   // 강물 출렁이는 물결 (시간 기반, 깜빡이지 않는 안정적 서머)
@@ -1381,12 +1378,11 @@ function renderBattlefield() {
     ctx.stroke();
   }
 
-  // 멀리 강 언덕/지평선 (상단 가장자리 연한 안개)
-  var hg = ctx.createLinearGradient(0, 0, 0, H * 0.18);
-  hg.addColorStop(0, 'rgba(240,250,255,0.5)');
-  hg.addColorStop(1, 'rgba(240,250,255,0)');
-  ctx.fillStyle = hg;
-  ctx.fillRect(0, 0, W, H * 0.18);
+  // 멀리 강 언덕/지평선 (상단 가장자리 연한 안개) — 캐시(좌표 고정)
+  var mistH = H * 0.18;
+  ctx.fillStyle = sceneGrad('mist|' + mistH, 0, 0, 0, mistH,
+    [0, 'rgba(240,250,255,0.5)', 1, 'rgba(240,250,255,0)']);
+  ctx.fillRect(0, 0, W, mistH);
 
   // 교량(다리) 상판 — 세로 한 줄(길), 상단(먼 곳, 좁게)에서 화면 하단(병사 지남)까지 쭉 이어짐
   var laneTopY = 0;
@@ -1394,11 +1390,9 @@ function renderBattlefield() {
   var laneBotY = H * 0.97;
   var laneBotW = W * 0.9;
   var cxp = W / 2;
-  // 다리 Deck
-  var bg = ctx.createLinearGradient(cxp - laneBotW / 2, 0, cxp + laneBotW / 2, 0);
-  bg.addColorStop(0, '#8A7A5A');
-  bg.addColorStop(0.5, '#B7A87F');
-  bg.addColorStop(1, '#8A7A5A');
+  // 다리 Deck — 캐시(좌표 고정, 리사이즈 시 갱신)
+  var bg = sceneGrad('deck|' + W, cxp - laneBotW / 2, 0, cxp + laneBotW / 2, 0,
+    [0, '#8A7A5A', 0.5, '#B7A87F', 1, '#8A7A5A']);
   ctx.fillStyle = bg;
   ctx.beginPath();
   ctx.moveTo(cxp - laneTopW / 2, laneTopY);
@@ -1674,17 +1668,29 @@ function renderEnemyFire() {
   }
 }
 
-// 몸통 그라디언트 캐시: 타입별(색상쌍) 단위공간(0,-40)→(0,0)으로 1회만 생성.
-// drawZombieBody에서 translate+scale 트랜스폼으로 재사용 → 프레임당 그라디언트 할당 0
+// 몸통 그라디언트 캐시: 타입별(색상쌍) 단위공간 (0,-span)→(0,0)으로 1회만 생성.
+// drawZombieBody/renderBosses에서 translate+scale 트랜스폼으로 재사용 → 프레임당 그라디언트 할당 0
 var BODY_GRADS = {};
-function bodyGrad(color, dark) {
-  var key = color + dark;
+function bodyGrad(color, dark, span) {
+  var key = color + dark + '|' + span;
   var g = BODY_GRADS[key];
   if (!g) {
-    g = ctx.createLinearGradient(0, -40, 0, 0);
+    g = ctx.createLinearGradient(0, -span, 0, 0);
     g.addColorStop(0, color);
     g.addColorStop(1, dark);
     BODY_GRADS[key] = g;
+  }
+  return g;
+}
+
+// 장면(배경) 그라디언트 캐시: 좌표가 고정된(리사이즈 시만 변함) 그라디언트를 1회 생성 후 재사용
+var SCENE_GRADS = {};
+function sceneGrad(key, x0, y0, x1, y1, stops) {
+  var g = SCENE_GRADS[key];
+  if (!g) {
+    g = ctx.createLinearGradient(x0, y0, x1, y1);
+    for (var i = 0; i < stops.length; i += 2) g.addColorStop(stops[i], stops[i + 1]);
+    SCENE_GRADS[key] = g;
   }
   return g;
 }
@@ -1705,7 +1711,7 @@ function drawZombieBody(z, cfg) {
   ctx.save();
   ctx.translate(x, bottom);
   ctx.scale(s, s);
-  ctx.fillStyle = bodyGrad(cfg.color, cfg.dark);
+  ctx.fillStyle = bodyGrad(cfg.color, cfg.dark, 40);
   ctx.beginPath();
   ctx.moveTo(-Lbw, 0);
   ctx.bezierCurveTo(-Lbw, -Lbh, -Lbw * 0.7, -Lbh * 1.8, 0, -Lbh * 2);
@@ -1850,18 +1856,20 @@ function renderBosses() {
     ctx.fill();
 
     // 몸: 큰 젤리 돔 (종류별 색상 — 일반=초록, 빠른=붉은, 탱크=보라)
+    // 로컬 좌표 + 트랜스폼(scale s) + 캐시 그라디언트(span 70)로 매 프레임 할당 제거
     var bcfg = BOSS_TYPES[bz.type] || BOSS_TYPES.normal;
-    var g = ctx.createLinearGradient(bz.x, bottom - bh * 2, bz.x, bottom);
-    g.addColorStop(0, bcfg.color);
-    g.addColorStop(1, bcfg.dark);
-    ctx.fillStyle = g;
+    ctx.save();
+    ctx.translate(bz.x, bottom);
+    ctx.scale(s, s);
+    ctx.fillStyle = bodyGrad(bcfg.color, bcfg.dark, 70);
     ctx.beginPath();
-    ctx.moveTo(bz.x - bw, bottom);
-    ctx.bezierCurveTo(bz.x - bw, bottom - bh, bz.x - bw * 0.7, bottom - bh * 1.8, bz.x, bottom - bh * 2);
-    ctx.bezierCurveTo(bz.x + bw * 0.7, bottom - bh * 1.8, bz.x + bw, bottom - bh, bz.x + bw, bottom);
-    ctx.quadraticCurveTo(bz.x, bottom + 4 * s, bz.x - bw, bottom);
+    ctx.moveTo(-30 * stretch, 0);
+    ctx.bezierCurveTo(-30 * stretch, -30 * squash, -30 * stretch * 0.7, -30 * squash * 1.8, 0, -30 * squash * 2);
+    ctx.bezierCurveTo(30 * stretch * 0.7, -30 * squash * 1.8, 30 * stretch, -30 * squash, 30 * stretch, 0);
+    ctx.quadraticCurveTo(0, 4, -30 * stretch, 0);
     ctx.closePath();
     ctx.fill();
+    ctx.restore();
 
     // 윤기(젤리 광택)
     ctx.fillStyle = 'rgba(255,255,255,0.30)';
