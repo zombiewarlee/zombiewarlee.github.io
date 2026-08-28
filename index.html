@@ -854,7 +854,7 @@ function spawnBoss(spreadX) {
   var type = pickBossType();
   var cfg = BOSS_TYPES[type];
   var baseW = 64 + Math.min(40, wave * 3);
-  var baseHp = 200 * wave;               // 기본 체력통(보스 HP) — 웨이브에 정비례하는 정배 성장
+  var baseHp = 100 * wave;               // 기본 체력통(보스 HP) — 웨이브에 정비례하는 정배 성장
   var baseSpd = 38 + Math.min(26, wave * 2);
   bosses.push({
     x: W / 2 + (spreadX !== undefined ? spreadX : rand(-W * 0.12, W * 0.12)),   // 대교를 가로질러 분포
