@@ -357,11 +357,11 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
       <div class="help-section">
         <h3>🧟 적</h3>
         <p><b>🟢 좀비:</b> 기본 몬스터</p>
-        <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
-        <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
-<p><b>🧱 방패 좀비:</b> 방패가 아주 단단해요! 웨이브가 높을수록 더 많은 총알로 막아내야 약해져요 (검은색)</p>
-<p><b>🫧 분열 좀비:</b> 죽으면 작은 좀비로 쪼개져요 — 웨이브가 높을수록 더 많이! (민트색, 5웨이브부터)</p>
-        <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황)</p>
+        <p><b>🫧 분열 좀비:</b> 죽으면 작은 좀비로 쪼개져요 — 웨이브가 높을수록 더 많이! (민트색, 3웨이브부터)</p>
+        <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛, 5웨이브부터)</p>
+        <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색, 7웨이브부터)</p>
+        <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황, 9웨이브부터)</p>
+        <p><b>🧱 방패 좀비:</b> 방패가 아주 단단해요! 첫 등장(11웨이브) 100발부터 시작해 웨이브마다 늘어나요 (검은색)</p>
         <p><b>👹 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터 <b>속도·탱크</b>, 6웨이브부터 <b>방패·원거리</b>, 7웨이브부터 <b>분열 보스</b>까지 섞여 등장! 분열 보스는 죽으면 작은 좀비를 쏟아내요.</p>
       </div>
       <div class="help-section">
@@ -743,21 +743,22 @@ function getHpForWave() {
 }
 
 function pickZombieType() {
-  var tankChance = wave >= 4 ? Math.min(0.18, 0.04 + wave * 0.008) : 0;
-  var fastChance = wave >= 2 ? Math.min(0.3, 0.1 + wave * 0.012) : 0;
-  var shieldChance = wave >= 3 ? Math.min(0.2, 0.05 + wave * 0.008) : 0;
-  var splitChance = wave >= 5 ? Math.min(0.16, 0.04 + wave * 0.008) : 0;
-  var rangedChance = wave >= 3 ? Math.min(0.16, 0.04 + wave * 0.007) : 0;
+  // 신규 종류는 새 웨이브마다(2웨이브 간격) 하나씩 도입: 일반 1 → 분열 3 → 빠른 5 → 탱크 7 → 원거리 9 → 방패 11
+  var splitChance = wave >= 3 ? Math.min(0.16, 0.04 + wave * 0.008) : 0;   // 민트 분열
+  var fastChance = wave >= 5 ? Math.min(0.3, 0.1 + wave * 0.012) : 0;      // 빠른
+  var tankChance = wave >= 7 ? Math.min(0.18, 0.04 + wave * 0.008) : 0;    // 탱크
+  var rangedChance = wave >= 9 ? Math.min(0.16, 0.04 + wave * 0.007) : 0;  // 원거리
+  var shieldChance = wave >= 11 ? Math.min(0.2, 0.05 + wave * 0.008) : 0;  // 방패
   var r = Math.random();
-  if (r < tankChance) return 'tank';
-  r -= tankChance;
-  if (r < fastChance) return 'fast';
-  r -= fastChance;
-  if (r < shieldChance) return 'shield';
-  r -= shieldChance;
   if (r < splitChance) return 'split';
   r -= splitChance;
+  if (r < fastChance) return 'fast';
+  r -= fastChance;
+  if (r < tankChance) return 'tank';
+  r -= tankChance;
   if (r < rangedChance) return 'ranged';
+  r -= rangedChance;
+  if (r < shieldChance) return 'shield';
   return 'normal';
 }
 
@@ -790,7 +791,7 @@ function spawnZombie() {
       wobbleSpeed: rand(3, 6),
       id: zombieId++,
       dead: false,
-      shield: type === 'shield' ? 60 + 20 * wave : 0,   // 방패 좀비: 웨이브마다 막기 횟수 증가
+      shield: type === 'shield' ? 100 + 20 * Math.max(0, wave - 11) : 0, // 방패 좀비: 첫 등장 100발부터 웨이브마다 +20
       fireTimer: rand(1.2, 2.4),     // 원거리 좀비: 첫 발사까지 대기 (등장 직후 안 쏨)
       charging: 0                    // 원거리 좀비: 조준 차징 잔여 시간
     });
