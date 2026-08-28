@@ -1004,9 +1004,13 @@ function killZombie(zi, z) {
   if (tcfg.splits) {
     var miniCfg = ZOMBIE_TYPES.mini;
     var spN = Math.min(10, 1 + Math.floor(wave / 4));   // 5웨이브≈2마리, 웨이브가 오를수록 증가
+    addPopups(z.x, z.y - 32, '🫧 분열!', '#14B8A6', 17);
+    addParticles(z.x, z.y, '#14B8A6', 12, 150, 0.5);
     for (var si = 0; si < spN; si++) {
+      // 분열된 미니는 원본 좌우로 살짝 퍼져 나옴 (한 자리에 겹쳐 생성되지 않게)
+      var sideOff = (si - (spN - 1) / 2) * 10;
       zombies.push({
-        x: z.x + rand(-10, 10),
+        x: z.x + sideOff + rand(-3, 3),
         y: z.y - 4,
         baseSpeed: miniCfg.speed,
         type: 'mini',
