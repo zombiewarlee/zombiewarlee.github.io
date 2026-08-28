@@ -726,11 +726,20 @@ function spawnBullet(x, y) {
     power: power
   });
 }
-// 부대 전체 발사: 병사 수만큼의 총알이 동시에 직선으로 나감
+// 부대 전체 발사: 병사 수(총알 수)만큼의 총알이 동시에 나감
+// 병사가 포메이션 자리(62)보다 많으면 각 자리가 그룹을 대표해 발사 → 총알 수는 항상 병사 수와 일치
 function fireSquad() {
-  var positions = squadPositions(soldier.lives, soldier.x);
-  for (var i = 0; i < positions.length; i++) {
-    spawnBullet(positions[i].x, positions[i].y - 34);
+  var positions = squadPositions(Math.min(soldier.lives, 62), soldier.x);
+  var count = soldier.lives;
+  var per = Math.max(1, Math.ceil(count / positions.length));
+  var fired = 0;
+  for (var i = 0; i < positions.length && fired < count; i++) {
+    for (var g = 0; g < per && fired < count; g++) {
+      // 그룹 확산: 부대 폭(±58px) 안에서 좁게 퍼뜨려 밀집 화망 유지
+      var jx = (g - (per - 1) / 2) * 1.4;
+      spawnBullet(positions[i].x + jx, positions[i].y - 34);
+      fired++;
+    }
   }
   soldier.muteFlash = 0.09;
   soldier.recoil = 3;
@@ -923,14 +932,18 @@ function updateBullets(dt) {
         break;
       }
     }
-    if (hitSomething) { bullets.splice(i, 1); continue; }
+    if (hitSomething) { bullets[i] = bullets[bullets.length - 1];
+      bullets.pop(); continue; }
 
     // 좀비 충돌
-    if (hitZombies(b)) { bullets.splice(i, 1); continue; }
+    if (hitZombies(b)) { bullets[i] = bullets[bullets.length - 1];
+      bullets.pop(); continue; }
     // 보스 충돌
-    if (hitBosses(b)) { bullets.splice(i, 1); continue; }
+    if (hitBosses(b)) { bullets[i] = bullets[bullets.length - 1];
+      bullets.pop(); continue; }
 
-    if (b.y < -60) { bullets.splice(i, 1); }
+    if (b.y < -60) { bullets[i] = bullets[bullets.length - 1];
+      bullets.pop(); }
   }
 }
 
@@ -1555,6 +1568,8 @@ function renderSoldier() {
    RENDER — bullets
    ═══════════════════════════════════════ */
 function renderBullets() {
+  // 대부대(총알 6000발+)는 코어 생략 — 단색 타원 1개로 자동 경량화 (렉 방지)
+  var light = bullets.length > 6000;
   for (var i = 0; i < bullets.length; i++) {
     var b = bullets[i];
     // 원근: 총알이 위(멀리)로 갈수록 얇고 작게, 아래(가까움)로 갈수록 굵게
@@ -1567,10 +1582,12 @@ function renderBullets() {
     ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
     ctx.fill();
     // 밝은 코어 (경량: 별도 그래디언트 없이 반투명 원 하나)
-    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-    ctx.beginPath();
-    ctx.ellipse(b.x, b.y - ry * 0.18, rx * 0.45, ry * 0.42, 0, 0, Math.PI * 2);
-    ctx.fill();
+    if (!light) {
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y - ry * 0.18, rx * 0.45, ry * 0.42, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 }
 
