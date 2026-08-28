@@ -360,7 +360,7 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
         <p><b>🟢 좀비:</b> 기본 몬스터</p>
         <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
         <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
-        <p><b>🧱 방패 좀비:</b> 처음 6발은 무효! 방패가 깨진 뒤엔 약해요 (쇳빛)</p>
+        <p><b>🧱 방패 좀비:</b> 처음 12발은 무효! 방패가 깨진 뒤엔 약해요 (쇳빛)</p>
         <p><b>🫧 분열 좀비:</b> 죽으면 작은 좀비 2마리로 쪼개져요 (민트색, 5웨이브부터)</p>
         <p><b>🎯 원거리 좀비:</b> 총알을 쏴요! 맞으면 병사 -1 — <b>좌우로 피하세요</b> (주황)</p>
         <p><b>👹 좀비 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터는 <b>속도·탱크 보스</b>도 섞여 등장!</p>
@@ -426,7 +426,7 @@ var ZOMBIE_TYPES = {
   normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },  // 초록
   fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#e0483f', dark: '#8f2a24', dmg: 1 },  // 붉은색(빠름)
   tank:   { hp: 85, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 },  // 보라
-  shield: { hp: 22, speed: 34,  w: 30, score: 0,  color: '#64748B', dark: '#334155', dmg: 1, shield: 6 },   // 쇳빛 — 첫 6발 무효(깨짐)
+  shield: { hp: 22, speed: 34,  w: 30, score: 0,  color: '#64748B', dark: '#334155', dmg: 1, shield: 12 },  // 쇳빛 — 첫 12발 무효(깨짐)
   split:  { hp: 36, speed: 42,  w: 30, score: 0,  color: '#14B8A6', dark: '#0F766E', dmg: 1, splits: 2 },   // 민트 — 죽으면 2마리로 분열
   mini:   { hp: 10, speed: 48,  w: 18, score: 0,  color: '#5EEAD4', dark: '#0F766E', dmg: 1 },   // 분열로 나오는 작은 좀비
   ranged: { hp: 16, speed: 36,  w: 26, score: 0,  color: '#F97316', dark: '#9A3412', dmg: 1, shoots: true } // 주황 — 총알 발사
