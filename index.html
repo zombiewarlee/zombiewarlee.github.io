@@ -343,7 +343,7 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
         <p><b>🟢 좀비:</b> 기본 몬스터</p>
         <p><b>💨 빠른 좀비:</b> 재빠르게 돌진 (붉은빛)</p>
         <p><b>🛡️ 탱크 좀비:</b> 느리지만 체력이 많음 (보라색)</p>
-        <p><b>👹 좀비 보스:</b> 아무 때나 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 쓰러뜨리면 큰 보상!</p>
+        <p><b>👹 좀비 보스:</b> 웨이브가 끝나갈 때 나타나요. 체력이 매우 높아 <b>많은 총알</b>이 필요. 5웨이브부터는 <b>속도·탱크 보스</b>도 섞여 등장!</p>
       </div>
       <div class="help-section">
         <h3>🪖 목숨 (군인)</h3>
@@ -403,6 +403,13 @@ var ZOMBIE_TYPES = {
   normal: { hp: 24, speed: 42,  w: 26, score: 10, color: '#4d9e4d', dark: '#2f6b2f', dmg: 1 },  // 초록
   fast:   { hp: 18, speed: 100, w: 22, score: 15, color: '#e0483f', dark: '#8f2a24', dmg: 1 },  // 붉은색(빠름)
   tank:   { hp: 85, speed: 26,  w: 40, score: 30, color: '#8e5bbf', dark: '#5b3a80', dmg: 2 }   // 보라
+};
+
+// 보스 종류별 배율/색상 — 5웨이브부터 섞여 등장 (일반=초록, 빠른=붉은, 탱크=보라)
+var BOSS_TYPES = {
+  normal: { wMul: 1.0,  hpMul: 1.0, spdMul: 1.0,  color: '#4ADE80', dark: '#14532D', name: '좀비 보스' },
+  fast:   { wMul: 0.78, hpMul: 0.55, spdMul: 2.1,  color: '#e0483f', dark: '#8f2a24', name: '속도 보스' },
+  tank:   { wMul: 1.28, hpMul: 1.8,  spdMul: 0.65, color: '#8e5bbf', dark: '#5b3a80', name: '탱크 보스' }
 };
 
 var WAVE_DURATION = 22;                // 웨이브당 시간(초)
@@ -738,21 +745,35 @@ function spawnCard() {
   });
 }
 
+function pickBossType() {
+  // 5웨이브부터 빠른·탱크 보스가 섞여 등장 (그 전엔 일반 보스만)
+  if (wave < 5) return 'normal';
+  var r = Math.random();
+  if (r < 0.3) return 'fast';
+  if (r < 0.55) return 'tank';
+  return 'normal';
+}
+
 function spawnBoss(spreadX) {
   // 매 웨이브마다 더 강해져서 나옴: 덩치/체력/이동속도가 웨이브에 비례해 성장.
+  // 5웨이브부터는 종류(일반/빠른/탱크)가 섞여 등장.
   // 스폰 위치는 지평선(대교) 중앙 — 유저(병사) 위치와 무관하게 고정
-  var w = 64 + Math.min(40, wave * 3);
-  var hp = 220 * wave;   // 체력통(보스 HP) — 웨이브 배수로 확대
+  var type = pickBossType();
+  var cfg = BOSS_TYPES[type];
+  var baseW = 64 + Math.min(40, wave * 3);
+  var baseHp = 220 * wave;               // 기본 체력통(보스 HP) — 웨이브 배수로 확대
+  var baseSpd = 38 + Math.min(26, wave * 2);
   bosses.push({
     x: W / 2 + (spreadX !== undefined ? spreadX : rand(-W * 0.12, W * 0.12)),   // 대교를 가로질러 분포
     y: horizonY(),
-    baseSpeed: 38 + Math.min(26, wave * 2),
-    w: w,
-    hp: hp,
-    maxHp: hp,
+    baseSpeed: baseSpd * cfg.spdMul,
+    w: baseW * cfg.wMul,
+    hp: baseHp * cfg.hpMul,
+    maxHp: baseHp * cfg.hpMul,
     wobble: 0,
-    wobbleSpeed: 2.2,
-    name: '좀비 보스'
+    wobbleSpeed: type === 'fast' ? 3.4 : 2.2,
+    type: type,
+    name: cfg.name
   });
 }
 
@@ -1001,7 +1022,6 @@ function updateWave(dt) {
     bossSpawned = true;
     bossQueue = wave;                      // 이번 웨이브 수만큼 대기열에
     bossQueueTimer = rand(0, 1.0);         // 첫 보스는 잠시 뒤
-    addPopups(W / 2, H * 0.2, '👹 좀비 보스 ' + wave + '마리 접근!', '#7F1D1D', 24);
   }
   if (bossQueue > 0) {
     bossQueueTimer -= dt;
@@ -1452,10 +1472,11 @@ function renderBosses() {
     ctx.ellipse(bz.x, bottom + 5 * s, bw + 5 * s, 7 * s, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // 몸: 큰 젤리 돔
+    // 몸: 큰 젤리 돔 (종류별 색상 — 일반=초록, 빠른=붉은, 탱크=보라)
+    var bcfg = BOSS_TYPES[bz.type] || BOSS_TYPES.normal;
     var g = ctx.createLinearGradient(bz.x, bottom - bh * 2, bz.x, bottom);
-    g.addColorStop(0, '#4ADE80');
-    g.addColorStop(1, '#14532D');
+    g.addColorStop(0, bcfg.color);
+    g.addColorStop(1, bcfg.dark);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(bz.x - bw, bottom);
@@ -1490,7 +1511,7 @@ function renderBosses() {
     ctx.fill();
 
     // 성난 눈썹 (보스 느낌)
-    ctx.strokeStyle = '#14532D';
+    ctx.strokeStyle = bcfg.dark;
     ctx.lineWidth = 3 * s;
     ctx.lineCap = 'round';
     ctx.beginPath();
