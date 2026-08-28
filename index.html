@@ -1634,24 +1634,32 @@ function renderEnemyFire() {
   for (var i = 0; i < enemyFire.length; i++) {
     var ef = enemyFire[i];
     var ang = Math.atan2(ef.vy, ef.vx);
+    var dm = 1 + (ef.dmg - 1) * 0.6;      // 피해량 비례 크기 — 보스탄(2피해)은 1.6배
     ctx.save();
     ctx.translate(ef.x, ef.y);
     ctx.rotate(ang);
-    // 주황 불꽃 총알 (꼬리 포함)
+    // 주황 불꽃 총알 (꼬리 포함) — 큰 피해일수록 크고 위험하게
     ctx.shadowColor = 'rgba(249,115,22,0.9)';
-    ctx.shadowBlur = 8;
+    ctx.shadowBlur = 8 * dm;
     ctx.fillStyle = '#FDBA74';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 10, 4.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 10 * dm, 4.5 * dm, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#F97316';
     ctx.beginPath();
-    ctx.ellipse(0, 0, 6.5, 3, 0, 0, Math.PI * 2);
+    ctx.ellipse(0, 0, 6.5 * dm, 3 * dm, 0, 0, Math.PI * 2);
     ctx.fill();
+    // 보스탄(2피해 이상)은 밝은 화이트 코어로 위험 강조
+    if (ef.dmg >= 2) {
+      ctx.fillStyle = '#FFF7ED';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 3.2 * dm, 1.5 * dm, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = 'rgba(249,115,22,0.5)';
     ctx.beginPath();
-    ctx.ellipse(-9, 0, 5, 2.2, 0, 0, Math.PI * 2);
+    ctx.ellipse(-9 * dm, 0, 5 * dm, 2.2 * dm, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.restore();
   }
