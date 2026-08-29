@@ -750,7 +750,7 @@ function spawnBullet(x, y) {
   if (bullets.length >= maxBullets()) return;
   var power = 1;   // 총알 데미지는 항상 1 — 화력은 병사 수(발사 빈도)로만 성장
   // 원근감: 스크린 정중앙(W/2)에서 벗어날수록 안쪽(중앙)으로 살짝 기울여 발사 — 정중앙에서는 수직
-  var vx = (W / 2 - x) * 0.10;
+  var vx = (W / 2 - x) * 0.10 + rand(-12, 12);   // ±12px/s 미세 산포 — 열 맞선 탄도가 겹쳐 뭉치지 않게
   allocBullet(x, y, vx, -BULLET_SPEED, power);
 }
 // 부대 전체 발사: 병사 수(총알 수)만큼의 총알이 동시에 나감
@@ -760,7 +760,8 @@ function fireSquad() {
   var count = soldier.lives;
   var per = Math.max(1, Math.ceil(count / positions.length));
   var fired = 0;
-  for (var i = 0; i < positions.length && fired < count; i++) {
+  soldier.volley = (soldier.volley || 0) ^ 1;   // 0↔1 교대 — 반토막 볼리: 절반 병사씩 번갈아 발사 (순간 밀도 반감, 초당 화력 동일)
+  for (var i = soldier.volley; i < positions.length && fired < count; i += 2) {
     for (var g = 0; g < per && fired < count; g++) {
       // 그룹 확산: 부대 폭(±58px) 안에서 좁게 퍼뜨려 밀집 화망 유지
       var jx = (g - (per - 1) / 2) * 1.4;
@@ -927,7 +928,7 @@ function updateSoldier(dt) {
   soldier.fireTimer -= dt;
   if (soldier.fireTimer <= 0) {
     fireSquad();
-    soldier.fireTimer = FIRE_INTERVAL;
+    soldier.fireTimer = FIRE_INTERVAL / 2;   // 반 박자 — 절반 병사씩 교차 발사 (순간 밀도 반감, 초당 화력 동일)
   }
   soldier.recoil = Math.max(0, soldier.recoil - dt * 30);
   soldier.firing = Math.max(0, soldier.firing - dt * 15);
@@ -1636,8 +1637,8 @@ function renderBullets() {
     // 원근: 총알이 위(멀리)로 갈수록 얇고 작게, 아래(가까움)로 갈수록 굵게
     bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
     // 경량 렌더: 잔상·그라디언트·곡선 제거, 단색 타원으로만 (대부대 렉 방지)
-    rx = 2.0 * bs;   // 작은 탄두 — 대부대에서도 총알 개수가 또렷하게 보임
-    ry = 5.5 * bs;
+    rx = 1.7 * bs;   // 탄두 소형화 (면적 -22%) — 개별 총알 식별 ↑
+    ry = 4.6 * bs;
     ctx.moveTo(b.x, b.y);   // 이전 서브패스와 이어진 선 방지
     ctx.ellipse(b.x, b.y, rx, ry, 0, 0, Math.PI * 2);
   }
@@ -1650,7 +1651,7 @@ function renderBullets() {
       b = bullets[i];
       bs = Math.max(scaleAt(b.y) || 0.9, 0.55);
       ctx.moveTo(b.x, b.y - bs);
-      ctx.ellipse(b.x, b.y - bs, 0.9 * bs, 2.31 * bs, 0, 0, Math.PI * 2);
+      ctx.ellipse(b.x, b.y - bs, 0.75 * bs, 1.9 * bs, 0, 0, Math.PI * 2);
     }
     ctx.fill();
   }
