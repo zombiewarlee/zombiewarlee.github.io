@@ -1070,7 +1070,7 @@ function killZombie(zi, z) {
   // 분열 좀비: 죽으면 웨이브에 비례해 여러 마리로 쪼개짐 (점수 없음, 처치수만)
   if (tcfg.splits) {
     var miniCfg = ZOMBIE_TYPES.mini;
-    var spN = Math.min(10, 1 + Math.floor(wave / 4));   // 5웨이브≈2마리, 웨이브가 오를수록 증가
+    var spN = Math.min(100, (1 + Math.floor(wave / 4)) * 10);   // 5웨이브≈20마리 (기존의 10배), 웨이브가 오를수록 증가
     addPopups(z.x, z.y - 32, '🫧 분열!', '#14B8A6', 17);
     addParticles(z.x, z.y, '#14B8A6', 12, 150, 0.5);
     for (var si = 0; si < spN; si++) {
