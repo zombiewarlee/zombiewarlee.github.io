@@ -436,7 +436,7 @@ var BOSS_TYPES = {
   fast:   { wMul: 0.78, hpMul: 0.55, spdMul: 2.1,  color: '#e0483f', dark: '#8f2a24', name: '속도 보스' },
   tank:   { wMul: 1.28, hpMul: 1.8,  spdMul: 0.65, color: '#8e5bbf', dark: '#5b3a80', name: '탱크 보스' },
   shield: { wMul: 1.15, hpMul: 1.5,  spdMul: 0.55, color: '#1F2937', dark: '#000000', name: '방패 보스', shield: 300 },
-  split:  { wMul: 0.95, hpMul: 0.85, spdMul: 1.05, color: '#14B8A6', dark: '#0F766E', name: '분열 보스', splits: 120 },
+  split:  { wMul: 0.95, hpMul: 0.85, spdMul: 1.05, color: '#14B8A6', dark: '#0F766E', name: '분열 보스', splits: 50 },
   ranged: { wMul: 0.9,  hpMul: 0.7,  spdMul: 0.9,  color: '#F97316', dark: '#9A3412', name: '원거리 보스', shoots: true }
 };
 
@@ -1109,7 +1109,7 @@ function killBoss(bi, bz) {
   kills++;
   addParticles(bz.x, bz.y, '#FBBF24', 40, 260, 0.9);
   addParticles(bz.x, bz.y, '#F97316', 30, 200, 0.8);
-  // 분열 보스: 죽으면 작은 좀비 120마리로 쏟아져 나옴 (각각 처치수 카운트)
+  // 분열 보스: 죽으면 작은 좀비 50마리로 쏟아져 나옴 (기준 5 × 10배, 각각 처치수 카운트)
   if (BOSS_TYPES[bz.type].splits) {
     var miniCfg = ZOMBIE_TYPES.mini;
     var spN = BOSS_TYPES[bz.type].splits;
