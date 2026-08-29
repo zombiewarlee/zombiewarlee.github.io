@@ -593,6 +593,11 @@ function renderContinueButton() {
    UTILITIES
    ═══════════════════════════════════════ */
 function clamp(v, lo, hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+// 대교(다리) 반폭 — y(깊이)에 비례 (렌더 deck 사다리꼴과 동일 보간: 상단 W*0.31 → 하단 W*0.45)
+function bridgeHalfW(y) {
+  return W * (0.31 + 0.14 * clamp(y / (H * 0.97), 0, 1));
+}
 function formatNumber(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
 function rand(a, b) { return a + Math.random() * (b - a); }
 function randInt(a, b) { return Math.floor(rand(a, b + 1)); }
@@ -1074,10 +1079,11 @@ function killZombie(zi, z) {
     addPopups(z.x, z.y - 32, '🫧 분열!', '#14B8A6', 17);
     addParticles(z.x, z.y, '#14B8A6', 12, 150, 0.5);
     for (var si = 0; si < spN; si++) {
-      // 분열된 미니는 원본 좌우로 살짝 퍼져 나옴 (한 자리에 겹쳐 생성되지 않게)
+      // 분열된 미니는 원본 좌우로 살짝 퍼져 나옴 — 대교(다리) 폭을 넘지 않게 클램프 (물로 새지 않음)
       var sideOff = (si - (spN - 1) / 2) * 10;
+      var bwHalf = bridgeHalfW(z.y) * 0.92;
       zombies.push({
-        x: z.x + sideOff + rand(-3, 3),
+        x: clamp(z.x + sideOff + rand(-3, 3), W / 2 - bwHalf, W / 2 + bwHalf),
         y: z.y - 4,
         baseSpeed: miniCfg.speed,
         type: 'mini',
@@ -1109,8 +1115,10 @@ function killBoss(bi, bz) {
     var spN = BOSS_TYPES[bz.type].splits;
     addPopups(bz.x, bz.y - 46, '🫧 분열!', '#14B8A6', 20);
     for (var si = 0; si < spN; si++) {
+      // 분열 미니도 대교(다리) 폭 안으로 클램프 — 교량 밖(물)으로 새지 않게
+      var bwHalf = bridgeHalfW(bz.y) * 0.92;
       zombies.push({
-        x: bz.x + rand(-30, 30),
+        x: clamp(bz.x + rand(-30, 30), W / 2 - bwHalf, W / 2 + bwHalf),
         y: bz.y,
         baseSpeed: miniCfg.speed,
         type: 'mini',
