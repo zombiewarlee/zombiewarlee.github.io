@@ -828,7 +828,7 @@ function spawnZombie() {
       wobbleSpeed: rand(3, 6),
       id: zombieId++,
       dead: false,
-      shield: type === 'shield' ? 100 + 20 * Math.max(0, wave - 11) : 0, // 방패 좀비: 첫 등장 100발부터 웨이브마다 +20
+      shield: type === 'shield' ? Math.min(300, 100 + 20 * Math.max(0, wave - 11)) : 0, // 방패 좀비: 첫 등장 100발부터 웨이브마다 +20 (최대 300)
       fireTimer: rand(1.2, 2.4),     // 원거리 좀비: 첫 발사까지 대기 (등장 직후 안 쏨)
       charging: 0                    // 원거리 좀비: 조준 차징 잔여 시간
     });
@@ -904,7 +904,7 @@ function spawnBoss(spreadX) {
     w: baseW * cfg.wMul,
     hp: baseHp * cfg.hpMul,
     maxHp: baseHp * cfg.hpMul,
-    shield: cfg.shield ? cfg.shield + 30 * Math.max(0, wave - 11) : 0,   // 방패 보스: 기본 300 + 웨이브마다 +30 (좀비 방패처럼 웨이브 비례)
+    shield: cfg.shield ? Math.min(300, cfg.shield + 30 * Math.max(0, wave - 11)) : 0,   // 방패 보스: 기본 300 + 웨이브마다 +30 (최대 300)
     fireTimer: 1.0,                // 원거리 보스: 첫 발사까지 대기 (주기 단축)
     charging: 0,                   // 원거리 보스: 조준 차징 잔여 시간
     wobble: 0,
