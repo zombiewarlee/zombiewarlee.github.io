@@ -904,7 +904,7 @@ function spawnBoss(spreadX) {
     w: baseW * cfg.wMul,
     hp: baseHp * cfg.hpMul,
     maxHp: baseHp * cfg.hpMul,
-    shield: cfg.shield ? Math.min(300, cfg.shield + 30 * Math.max(0, wave - 11)) : 0,   // 방패 보스: 기본 300 + 웨이브마다 +30 (최대 300)
+    shield: cfg.shield ? cfg.shield + 30 * Math.max(0, wave - 11) : 0,   // 방패 보스: 기본 300 + 웨이브마다 +30 (상한 없음)
     fireTimer: 1.0,                // 원거리 보스: 첫 발사까지 대기 (주기 단축)
     charging: 0,                   // 원거리 보스: 조준 차징 잔여 시간
     wobble: 0,
