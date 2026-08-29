@@ -1242,7 +1242,7 @@ function updateBosses(dt) {
         bz.charging -= dt;
         if (bz.charging <= 0) {
           bz.charging = 0;
-          fireEnemyShot(bz, 2, 44, 220);
+          fireEnemyShot(bz, 10, 44, 220);   // 보스탄 피해 10 — 한 방에 병사 10 감소
           bz.fireTimer = rand(1.1, 1.6);   // 주기 단축 — 발사 빈도 ↑
         }
       } else {
@@ -1664,7 +1664,7 @@ function renderEnemyFire() {
   for (var i = 0; i < enemyFire.length; i++) {
     var ef = enemyFire[i];
     var ang = Math.atan2(ef.vy, ef.vx);
-    var dm = 1 + (ef.dmg - 1) * 0.6;      // 피해량 비례 크기 — 보스탄(2피해)은 1.6배
+    var dm = Math.min(1 + (ef.dmg - 1) * 0.6, 2.6);   // 피해량 비례 크기 — 상한 2.6 (피해 10이어도 화면을 덮지 않게)
     ctx.save();
     ctx.translate(ef.x, ef.y);
     ctx.rotate(ang);
