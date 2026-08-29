@@ -833,7 +833,7 @@ function spawnCard() {
   var r = Math.random();
   var kind = 'add';
   var value;
-  // 낮은 확률(10%)로 황금 ×2 카드 — 맞히면 병사가 2배로 (필요 타격수는 대폭)
+  // 낮은 확률(10%)로 황금 ×2 카드 — 병사 1000명 이하에서만 등장 (그 이후엔 부대가 배로 늘어 난이도 붕괴)
   if (r < 0.10) {
     kind = 'mul';
     value = 2;
@@ -935,13 +935,12 @@ function updateBullets(dt) {
     var zz = zombies[zi];
     if (zz.dead) continue;
     var zs = scaleAt(zz.y) || 0.7;
-    var gt = zz.y - 16 * zs - (zz.w * 0.9 * zs + 4) - 2;
+    var gt = zz.y - 34 * zs - 4;     // 좀비 히트박스 상단(몸통 돔 정상) - 2px
     if (gt < gateY) gateY = gt;
   }
   for (var bi = 0; bi < bosses.length; bi++) {
     var bz = bosses[bi];
-    var bs = scaleAt(bz.y) || 0.7;
-    var gb = bz.y - 24 * bs - (bz.w * 0.55 + 6) - 2;
+    var gb = bz.y - 54 * (bz.w / 64) - 4;   // 보스 히트박스 상단(몸통 돔 정상) - 2px
     if (gb < gateY) gateY = gb;
   }
   for (var ci = 0; ci < cards.length; ci++) {
@@ -1003,9 +1002,11 @@ function hitZombies(b) {
     if (z.dead) continue;
     var zs = scaleAt(z.y) || 0.7;
     var zcx = z.x;
-    var zcy = z.y - 16 * zs;         // 신체 중심 (발이 아니라 몸통)
-    var hw = z.w * 0.62 * zs + 4;    // 가로 판정 반폭 (여유 포함)
-    var hh = z.w * 0.9 * zs + 4;     // 세로 판정 반높이
+    // 히트박스 = 몸통(그림자 제외): 바닥 z.y+4s ~ 돔 정상 z.y-34s, 반폭 17s
+    // → 바닥 그림자(z.y+3s~+11s)에 총알이 닿아도 사라지지 않음
+    var zcy = z.y - 15 * zs;         // 몸통 중심
+    var hw = 15 * zs + 2;            // 가로 반폭 (몸통 17s 기준 살짝 여유)
+    var hh = 19 * zs + 2;            // 세로 반높이 — 바닥/z.y+4s ~ 정상/z.y-34s 정확 일치
     if (Math.abs(zcx - b.x) < hw && Math.abs(zcy - b.y) < hh) {
       // 방패 좀비: 남은 막기 횟수가 있으면 피해 대신 방패가 한 번 막아줌 (깨지면 무효)
       if (z.shield > 0) {
@@ -1032,10 +1033,12 @@ function hitBosses(b) {
   var hit = false;
   for (var bi = bosses.length - 1; bi >= 0; bi--) {
     var bz = bosses[bi];
-    var zs = scaleAt(bz.y) || 0.7;
-    var bcy = bz.y - 24 * zs;        // 보스 몸통 중심
-    var hw = bz.w * 0.6 + 6;
-    var hh = bz.w * 0.55 + 6;
+    // 히트박스 = 보스 몸통(그림자 제외): 바닥 bz.y+6sr ~ 정상 bz.y-54sr, 반폭 30sr
+    // (렌더와 동일한 타입 스케일 sr=bz.w/64 사용 — 그림자에 닿아도 안 사라짐)
+    var sr = bz.w / 64;
+    var bcy = bz.y - 24 * sr;        // 몸통 중심
+    var hw = 26 * sr + 2;            // 가로 반폭 (몸통 30sr 기준 살짝 여유)
+    var hh = 30 * sr + 2;            // 세로 반높이 — 바닥/정상 정확 일치
     if (Math.abs(bz.x - b.x) < hw && Math.abs(bcy - b.y) < hh) {
       // 방패 보스: 남은 막기 횟수가 있으면 피해 대신 방패가 막아줌 (깨지면 무효)
       if (bz.shield > 0) {
