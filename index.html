@@ -716,19 +716,37 @@ function addPopups(x, y, text, color, size) {
    ═══════════════════════════════════════ */
 function maxBullets() { return MAX_BULLETS_BASE + soldier.lives * BULLETS_PER_MEMBER; }
 
+// 총알 객체 풀: 초당 수천 개 생성/폐기되는 총알 객체를 재사용 → GC 부하 제거
+// (객체 {x,y,vx,vy,power}는 alloc 시 항상 5개 필드 전부 재할당 — 상태 잔재 없음)
+var bulletPool = [];
+var MAX_BULLET_POOL = 30000;   // 최대 동시 총알(부대 2400명 ≈ 21,660발)보다 넉넉히
+
+function allocBullet(x, y, vx, vy, power) {
+  var b = bulletPool.length > 0 ? bulletPool.pop() : {};
+  b.x = x; b.y = y; b.vx = vx; b.vy = vy; b.power = power;
+  bullets.push(b);
+  return b;
+}
+
+function freeBullet(b) {
+  if (bulletPool.length < MAX_BULLET_POOL) bulletPool.push(b);
+}
+
+// swap-pop 제거 공통화: 마지막 총알을 i로 옮기고, 제거되는 총알은 풀로 반환
+function removeBulletAt(i) {
+  var last = bullets[bullets.length - 1];
+  freeBullet(bullets[i]);
+  bullets[i] = last;
+  bullets.pop();
+}
+
 // 병사 1명이 자기 위치에서 직선(위)으로 총알을 발사한다
 function spawnBullet(x, y) {
   if (bullets.length >= maxBullets()) return;
   var power = 1;   // 총알 데미지는 항상 1 — 화력은 병사 수(발사 빈도)로만 성장
   // 원근감: 스크린 정중앙(W/2)에서 벗어날수록 안쪽(중앙)으로 살짝 기울여 발사 — 정중앙에서는 수직
   var vx = (W / 2 - x) * 0.10;
-  bullets.push({
-    x: x,
-    y: y,
-    vx: vx,
-    vy: -BULLET_SPEED,
-    power: power
-  });
+  allocBullet(x, y, vx, -BULLET_SPEED, power);
 }
 // 부대 전체 발사: 병사 수(총알 수)만큼의 총알이 동시에 나감
 // 병사가 포메이션 자리(62)보다 많으면 각 자리가 그룹을 대표해 발사 → 총알 수는 항상 병사 수와 일치
@@ -941,8 +959,7 @@ function updateBullets(dt) {
     // 모든 적보다 위: 충돌 불가 구간 → 제거 여부만 처리하고 루프 생략
     if (b.y < gateY) {
       if (b.y < -60) {
-        bullets[i] = bullets[bullets.length - 1];
-        bullets.pop();
+        removeBulletAt(i);
       }
       continue;
     }
@@ -968,18 +985,14 @@ function updateBullets(dt) {
         break;
       }
     }
-    if (hitSomething) { bullets[i] = bullets[bullets.length - 1];
-      bullets.pop(); continue; }
+    if (hitSomething) { removeBulletAt(i); continue; }
 
     // 좀비 충돌
-    if (hitZombies(b)) { bullets[i] = bullets[bullets.length - 1];
-      bullets.pop(); continue; }
+    if (hitZombies(b)) { removeBulletAt(i); continue; }
     // 보스 충돌
-    if (hitBosses(b)) { bullets[i] = bullets[bullets.length - 1];
-      bullets.pop(); continue; }
+    if (hitBosses(b)) { removeBulletAt(i); continue; }
 
-    if (b.y < -60) { bullets[i] = bullets[bullets.length - 1];
-      bullets.pop(); }
+    if (b.y < -60) { removeBulletAt(i); }
   }
 }
 
