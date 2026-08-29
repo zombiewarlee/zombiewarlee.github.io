@@ -1252,7 +1252,7 @@ function updateBosses(dt) {
     }
 
     if (bz.y >= hitLine) {
-      soldierHit(4);
+      soldierHit(10);   // 경계선 돌파 피해 10 — 원거리 보스탄과 동일 위협
       addParticles(bz.x, hitLine, '#7C2D12', 20, 200, 0.8);
       addPopupShake();
       bosses.splice(i, 1);
