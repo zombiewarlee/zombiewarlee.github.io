@@ -904,7 +904,7 @@ function spawnBoss(spreadX) {
     hp: baseHp * cfg.hpMul,
     maxHp: baseHp * cfg.hpMul,
     shield: cfg.shield || 0,       // 방패 보스: 막기 횟수 (깨지면 0)
-    fireTimer: 2.0,                // 원거리 보스: 첫 발사까지 대기
+    fireTimer: 1.0,                // 원거리 보스: 첫 발사까지 대기 (주기 단축)
     charging: 0,                   // 원거리 보스: 조준 차징 잔여 시간
     wobble: 0,
     wobbleSpeed: type === 'fast' ? 3.4 : 2.2,
@@ -1242,7 +1242,7 @@ function updateBosses(dt) {
         if (bz.charging <= 0) {
           bz.charging = 0;
           fireEnemyShot(bz, 2, 44, 220);
-          bz.fireTimer = rand(2.6, 3.6);
+          bz.fireTimer = rand(1.1, 1.6);   // 주기 단축 — 발사 빈도 ↑
         }
       } else {
         bz.fireTimer -= dt;
