@@ -274,6 +274,7 @@ body{
 .btn-primary:active{background:var(--primary-hover);transform:scale(0.97)}
 .btn-secondary{background:var(--surface-raised);color:var(--text);border:2.5px solid var(--border)}
 .btn-secondary:active{background:var(--border-thin);transform:scale(0.97)}
+.btn[hidden]{display:none}
 
 .completion-stats{display:flex;gap:var(--space-3);justify-content:center;margin:var(--space-3) 0 var(--space-4);flex-wrap:nowrap}
 .stat{text-align:center;min-width:0}
@@ -391,7 +392,9 @@ button:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
     </div>
     <div class="modal-actions">
       <button class="btn btn-primary" id="btnGoRetry" type="button">🔄 다시 하기</button>
+      <button class="btn btn-primary" id="btnGoPlay" type="button" hidden>🎮 시작하기</button>
       <button class="btn btn-secondary" id="btnGoHome" type="button">🏠 홈으로</button>
+      <button class="btn btn-secondary" id="btnGoShare" type="button">📋 공유하기</button>
     </div>
     <button class="btn-portal" type="button">🎮 다른 게임하기</button>
   </div>
@@ -471,6 +474,8 @@ var goKills = document.getElementById('goKills');
 var goNewRecord = document.getElementById('goNewRecord');
 var btnGoRetry = document.getElementById('btnGoRetry');
 var btnGoHome = document.getElementById('btnGoHome');
+var btnGoShare = document.getElementById('btnGoShare');
+var btnGoPlay = document.getElementById('btnGoPlay');
 var btnHelp = document.getElementById('btnHelp');
 var modalHelp = document.getElementById('modalHelp');
 var btnHelpClose = document.getElementById('btnHelpClose');
@@ -503,6 +508,7 @@ var waveTimer = 0;
 var cardTimer = 0;
 var bossTimer = 0;
 var gameTime = 0;
+var currentShareData = null;   // 게임오버 시점의 공유용 결과 데이터 (공유 URL 생성에 사용)
 var bossSpawned = false;   // 이번 웨이브 보스 소환 시작 여부 (웨이브 끝 무렵 1회)
 var bossQueue = 0;         // 아직 등장하지 않은 보스 수 — 한 마리씩 랜덤 타이밍으로 등장
 var bossQueueTimer = 0;    // 다음 보스 등장까지 남은 시간(초)
@@ -2228,6 +2234,91 @@ function startGame(fromSave) {
   startLoop();
 }
 
+/* ═══════════════════════════════════════
+   RESULT SHARE — URL(hash)로 결과 공유
+   로컬 테스트를 위해 origin(도메인)은 하드코딩하지 않고
+   현재 페이지의 location을 그대로 사용한다.
+   ═══════════════════════════════════════ */
+// Base64 인코딩 (URL-safe: + / = 제거)
+function encodeShareData(data) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(data))))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+// Base64 디코딩 (+ 검증). 실패 시 null.
+function decodeShareData(encoded) {
+  try {
+    var b64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '=';
+    var json = decodeURIComponent(escape(atob(b64)));
+    var data = JSON.parse(json);
+    if (!data || typeof data !== 'object' || data.v !== 1 || data.g !== 'zombie') return null;
+    if (typeof data.w !== 'number' || typeof data.k !== 'number') return null;
+    return {
+      w: Math.max(1, Math.floor(data.w)),
+      k: Math.max(0, Math.floor(data.k)),
+      t: typeof data.t === 'number' ? Math.max(0, Math.floor(data.t)) : 0
+    };
+  } catch (e) { return null; }
+}
+// 현재 페이지 기반 공유 URL 생성 (로컬: localhost, 배포: 실제 도메인 자동 반영)
+function buildShareUrl() {
+  if (!currentShareData) return null;
+  var shareOrigin = location.protocol === 'file:' ? location.href.split('#')[0] : location.origin + location.pathname;
+  return shareOrigin + '#' + encodeShareData(currentShareData);
+}
+// 공유 결과 화면 표시 — 게임을 로드하지 않고 게임오버 모달만 띄운다.
+// 시작 화면(깔끔한 배경) 위에 바로 모달을 띄워 캔버스가 안 그려진 상태를 피한다.
+function showSharedResult(data) {
+  phase = 'over';
+  goWave.textContent = data.w;
+  goKills.textContent = formatNumber(data.k);
+  goNewRecord.hidden = true;
+  goMessage.textContent = '공유받은 전투 결과예요.';
+  currentShareData = { v: 1, g: 'zombie', w: data.w, k: data.k, t: data.t };
+  // 공유받은 화면: 공유/다시하기는 불필요 → "나도 하기"로 대체
+  btnGoShare.hidden = true;
+  btnGoRetry.hidden = true;
+  btnGoPlay.hidden = false;
+  modalGameOver.classList.add('show');
+}
+function clearShareHash() {
+  if (location.hash) {
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+  }
+}
+
+// 공유 버튼: URL 생성 → 클립보드 복사 → 피드백
+function shareResult() {
+  var url = buildShareUrl();
+  if (!url) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() {
+      goMessage.textContent = '🔗 링크가 복사됐어요! 메시지에 붙여넣어 공유하세요.';
+    }).catch(function() {
+      fallbackCopyShare(url);
+    });
+  } else {
+    fallbackCopyShare(url);
+  }
+}
+// 클립보드 API 미지원/실패 시 폴백 (선택 텍스트 복사)
+function fallbackCopyShare(url) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    goMessage.textContent = '🔗 링크가 복사됐어요! 메시지에 붙여넣어 공유하세요.';
+  } catch (e) {
+    // 마지막 폴백: URL을 직접 표시
+    goMessage.innerHTML = '🔗 아래 링크를 길게 눌러 복사하세요:<br><small style="word-break:break-all;user-select:all">' + url + '</small>';
+  }
+}
+
 function endGame() {
   if (phase !== 'playing') return;
   phase = 'over';
@@ -2238,6 +2329,12 @@ function endGame() {
   var isNew = updateRecordsOnFinish();
   goNewRecord.hidden = !isNew;
   goMessage.textContent = soldier.lives <= 0 ? '부대가 모두 전멸했어요...' : '전쟁이 끝났어요.';
+  // 공유용 데이터 캐시 (공유 버튼 누를 때 URL 생성에 사용)
+  currentShareData = { v: 1, g: 'zombie', w: wave, k: kills, t: Math.floor(gameTime) };
+  // 내가 플레이한 게임오버: 나도하기는 불필요 → 공유/다시하기 표시
+  btnGoShare.hidden = false;
+  btnGoRetry.hidden = false;
+  btnGoPlay.hidden = true;
   setTimeout(function() {
     modalGameOver.classList.add('show');
   }, 400);
@@ -2252,6 +2349,7 @@ function backHome() {
   modalHelp.classList.remove('show');
   screenStart.classList.add('show');
   renderStartRecords();
+  clearShareHash();
 }
 
 /* ═══════════════════════════════════════
@@ -2319,8 +2417,11 @@ document.addEventListener('keyup', function(e) {
    ═══════════════════════════════════════ */
 btnStart.addEventListener('click', function() { startGame(false); });
 btnContinue.addEventListener('click', function() { startGame(true); });
-btnGoRetry.addEventListener('click', function() { modalGameOver.classList.remove('show'); startGame(false); });
+btnGoRetry.addEventListener('click', function() { modalGameOver.classList.remove('show'); clearShareHash(); startGame(false); });
 btnGoHome.addEventListener('click', function() { backHome(); });
+btnGoShare.addEventListener('click', function() { shareResult(); });
+// 공유받은 결과 → "나도 하기": hash 정리 후 새 게임 시작
+btnGoPlay.addEventListener('click', function() { modalGameOver.classList.remove('show'); clearShareHash(); startGame(false); });
 btnHelp.addEventListener('click', function() { modalHelp.classList.add('show'); });
 btnHelpClose.addEventListener('click', function() { modalHelp.classList.remove('show'); });
 modalHelp.addEventListener('click', function(e) { if (e.target === modalHelp) modalHelp.classList.remove('show'); });
@@ -2350,6 +2451,18 @@ document.addEventListener('visibilitychange', function() {
    INIT
    ═══════════════════════════════════════ */
 renderStartRecords();
+
+// 공유 URL(hash)로 접속한 경우 → 게임을 로드하지 않고 결과 화면만 표시
+(function() {
+  if (!location.hash || location.hash.length < 2) return;
+  var data = decodeShareData(location.hash.slice(1));
+  if (data) {
+    showSharedResult(data);
+  } else {
+    // 유효하지 않은 hash → 주소창에서 제거
+    clearShareHash();
+  }
+})();
 
 })();
 </script>
